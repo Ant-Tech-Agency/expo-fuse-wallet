@@ -1,14 +1,13 @@
-import {SafeAreaView, Text, TouchableOpacity} from 'react-native'
+import { SafeAreaView, Text, TouchableOpacity} from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {walletEffect} from '@/effects/wallet.effect'
 import {useNavigation} from 'react-navigation-hooks'
 import {walletStore} from '@/stores/wallet.store'
-
 export const Home: React.FC = () => {
   const {navigate} = useNavigation()
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
-  
+
   useEffect(() => {
     setLoading(true)
     walletEffect.balance()
@@ -20,7 +19,7 @@ export const Home: React.FC = () => {
         setLoading(false)
       })
   }, [])
-  
+
   return (
     <SafeAreaView style={{
       flex: 1
