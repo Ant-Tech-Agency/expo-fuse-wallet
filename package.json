@@ -15,6 +15,7 @@
     "expo": "^34.0.1",
     "expo-secure-store": "~6.0.0",
     "node-libs-browser": "^2.2.1",
+    "prettier": "^1.18.2",
     "ramda": "^0.26.1",
     "react": "16.8.3",
     "react-dom": "^16.8.6",
