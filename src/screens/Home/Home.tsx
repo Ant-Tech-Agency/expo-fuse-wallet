@@ -1,11 +1,12 @@
-import {SafeAreaView, Text, TouchableOpacity, View} from 'react-native'
+import {Image, KeyboardAvoidingView, SafeAreaView, Text, TouchableOpacity, View} from 'react-native'
 import React, {useEffect, useState} from 'react'
-import {walletEffect} from '@/effects/wallet.effect'
+import {WalletEffect, walletEffect} from '@/effects/wallet.effect'
 import {useNavigation} from 'react-navigation-hooks'
 import {walletStore} from '@/stores/wallet.store'
 import styles from './Styles'
 import {images} from '@/themes'
-import { AInput } from '@/components'
+import {AInput} from '@/components'
+import Styles from '@/screens/AccessWallet/Styles'
 
 export const Home: React.FC = () => {
   const {navigate} = useNavigation()
@@ -17,7 +18,7 @@ export const Home: React.FC = () => {
     setLoading(true)
     walletEffect.getAllBalances()
       .then(balances => {
-        setBalance(balances[walletEffect.FSN_TOKEN_ADDRESS])
+        setBalance(balances[walletEffect.FSN_TOKEN_ADDRESS] / WalletEffect.normalizeBalance(18))
         setAssets(balances)
       })
       .finally(() => {
@@ -30,7 +31,7 @@ export const Home: React.FC = () => {
       flex: 1
     }}>
       <KeyboardAvoidingView style={styles.container}>
-        <Image resizeMode={'contain'} source={images.logo} style={styles.logo}/>
+        <Image style={Styles.logo} source={require("../../../assets/logo.png")} />
         <Text style={styles.titleScreen}>
           Wallet Info
         </Text>
@@ -46,7 +47,7 @@ export const Home: React.FC = () => {
             </Text>
           </View>
           <Text style={styles.textCategory}>Public Address:</Text>
-          <Text style={styles.textPublicAddress}>{balance}</Text>
+          <Text style={styles.textPublicAddress}>{walletStore.wallet.address}</Text>
         </View>
         <View style={styles.wrapInput}>
           <Text style={styles.titleFeature}>
