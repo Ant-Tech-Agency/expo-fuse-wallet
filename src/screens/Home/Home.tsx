@@ -1,4 +1,4 @@
-import {SafeAreaView, Text, TouchableOpacity} from 'react-native'
+import {SafeAreaView, Text, TouchableOpacity, View} from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {walletEffect} from '@/effects/wallet.effect'
 import {useNavigation} from 'react-navigation-hooks'
@@ -8,13 +8,14 @@ export const Home: React.FC = () => {
   const {navigate} = useNavigation()
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
+  const [assets, setAssets] = useState({})
   
   useEffect(() => {
     setLoading(true)
-    walletEffect.balance()
-      .then((value) => {
-        console.log(value)
-        setBalance(value)
+    walletEffect.getAllBalances()
+      .then(balances => {
+        setBalance(balances[walletEffect.FSN_TOKEN_ADDRESS])
+        setAssets(balances)
       })
       .finally(() => {
         setLoading(false)
@@ -39,6 +40,14 @@ export const Home: React.FC = () => {
             `${balance} FSN`
         }
       </Text>
+      <View>
+        {
+          Object.keys(assets).map(key => {
+            return <Text key={key}>{key} - {assets[key]}</Text>
+          })
+        }
+      </View>
+      
       <TouchableOpacity
         style={{
           backgroundColor: '#81AFE0',
