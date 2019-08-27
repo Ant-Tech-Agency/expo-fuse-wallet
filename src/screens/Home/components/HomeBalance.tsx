@@ -1,8 +1,11 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { walletStore } from '@/stores/wallet.store'
-
-export const HomeBalance = (props) => {
+type Props = {
+	balance: string,
+	loading: string
+}
+export const HomeBalance: React.FC <Props> = (props) => {
 	const {balance, loading} = props
 	return (
 		<View style={styles.container}>

@@ -1,17 +1,18 @@
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { AInput } from '@/components'
-
-export const HomeInfo = (props) => {
-	const {name, titleButton, titleField1, titleField2} = props
+type Props = {
+	name: string,
+	titleButton: string
+};
+export const HomeInfo: React.FC <Props> = (props) => {
+	const {name, children, titleButton} = props
 	return (
 		<View style={styles.wrapInput}>
 			<Text style={styles.titleFeature}>
 				{name}
 			</Text>
 			<View style={{flex: 1, justifyContent: 'center'}}>
-				<AInput name={titleField1}/>
-				<AInput name={titleField2}/>
+				{children}
 				<TouchableOpacity
 					style={styles.button}
 				>

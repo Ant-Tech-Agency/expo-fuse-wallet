@@ -40,16 +40,18 @@ export const Home: React.FC = () => {
         />
         <HomeInfo
 	        name={'Asset Creation'}
-	        titleField1={'Asset Name:'}
-	        titleField2={'Supply:'}
 	        titleButton={'Create Asset'}
-        />
+        >
+	        <AInput name={'Asset Name:'}/>
+	        <AInput name={'Supply:'}/>
+        </HomeInfo>
         <HomeInfo
 	        name={'Send Asset'}
-	        titleField1={'To:'}
-	        titleField2={'Quantity:'}
 	        titleButton={'Send Asset'}
-        />
+        >
+	        <AInput name={'To:'}/>
+	        <AInput name={'Quantity:'}/>
+        </HomeInfo>
         <TouchableOpacity
         	style={styles.buttonLogOut}
         	onPress={async () => {
