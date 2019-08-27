@@ -1,5 +1,5 @@
-import {walletStore} from '../stores/wallet.store'
-import {web3Store} from '../stores/web3.store'
+import {walletStore} from '@/stores/wallet.store'
+import {web3Store} from '@/stores/web3.store'
 
 export class WalletEffect {
   async balance() {

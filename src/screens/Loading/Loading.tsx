@@ -2,6 +2,7 @@ import {ActivityIndicator, View} from 'react-native'
 import React, {useEffect} from 'react'
 import {walletStore} from '@/stores/wallet.store'
 import {useNavigation} from 'react-navigation-hooks'
+import {MyEtherWallet} from '@/libs/myetherwallet'
 
 export const Loading: React.FC = () => {
   const {navigate} = useNavigation()
@@ -11,6 +12,7 @@ export const Loading: React.FC = () => {
       .then(key => {
         console.log(key)
         if (key) {
+          walletStore.wallet = new MyEtherWallet(key)
           navigate('Home')
         } else {
           navigate('AccessWallet')
