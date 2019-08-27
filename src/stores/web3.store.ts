@@ -1,5 +1,6 @@
 import Web3 from 'web3'
 import Web3FusionExtend, {Web3Fusion} from 'web3-fusion-extend'
+import WebsocketProvider from '@/libs/ether-socket-provider'
 
 export class Web3Store {
   public web3: Web3
@@ -8,7 +9,7 @@ export class Web3Store {
   constructor() {}
   
   init() {
-    const provider = new Web3.providers.WebsocketProvider(
+    const provider = new WebsocketProvider(
       'wss://testnetpublicgateway1.fusionnetwork.io:10001'
     )
   

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "com.anttech.fusewallet",
-    "slug": "fuse-wallet",
-    "privacy": "public",
+    "name": "com.anttech.fusionwallet",
+    "slug": "fusion-wallet",
+    "privacy": "private",
     "sdkVersion": "34.0.0",
     "platforms": [
       "ios",
@@ -25,6 +25,7 @@
     ],
     "ios": {
       "supportsTablet": true
-    }
+    },
+    "description": ""
   }
 }
