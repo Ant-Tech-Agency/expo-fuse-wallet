@@ -1,53 +1,39 @@
 import './global'
-import React, {useEffect} from 'react'
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native'
-import Web3 from 'web3'
-import Web3FusionExtend from 'web3-fusion-extend'
+import React, {useState} from 'react'
+import {StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native'
+import {walletStore} from './src/stores/wallet.store'
+import {MyEtherWallet} from './src/libs/myetherwallet'
+import {web3Store} from './src/stores/web3.store'
 
-// 46688
-const provider = new Web3.providers.WebsocketProvider(
-  'wss://testnetpublicgateway1.fusionnetwork.io:10001'
-)
-
-provider.on('data', () => {
-  console.log('connected')
-})
-
-provider.on('error', () => {
-  console.log('error')
-})
-
-const web3 = new Web3(provider)
-const web3FusionExtend = Web3FusionExtend.extend(web3)
+web3Store.init()
 
 export default function App() {
-  useEffect(() => {
-    web3.eth
-      .getBlock(200)
-      .then(block => {
-        console.log(block)
-      })
-      .catch(err => {
-        console.log('error', err)
-      })
-  }, [])
+  const [privateKey, setPrivateKey] = useState('B2A6B4E1E510FE05AB051C9944B433427D90F2D117E1B32248A1B811BCDB54F9')
   
-  function getAllBalances() {
-    web3FusionExtend.fsn
-      .getAllBalances('0xC4A9441afB052cB454240136CCe71Fb09316EA94')
-      .then(balances => {
-        console.log(balances)
-      })
-      .catch(err => {
-        console.log('error', err)
-      })
+  function onUnlock() {
+    walletStore.wallet = new MyEtherWallet(privateKey)
   }
   
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <TouchableOpacity onPress={getAllBalances}>
-        <Text>Get all balance</Text>
+      <TextInput
+        style={{
+          borderWidth: 1,
+          width: '100%',
+          padding: 20,
+          fontSize: 16
+        }}
+        value={privateKey}
+        onChangeText={setPrivateKey}
+      />
+      <TouchableOpacity
+        style={{
+          height: 50,
+          backgroundColor: 'tomato'
+        }}
+        onPress={onUnlock}
+      >
+        <Text>Unlock</Text>
       </TouchableOpacity>
     </View>
   )

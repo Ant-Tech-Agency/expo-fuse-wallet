@@ -18,6 +18,8 @@
     "react-dom": "^16.8.6",
     "react-native": "https://github.com/expo/react-native/archive/sdk-34.0.0.tar.gz",
     "react-native-web": "^0.11.4",
+    "rxjs": "^6.5.2",
+    "rxjs-compat": "^6.5.2",
     "web3": "^1.0.0-beta.34",
     "web3-fusion-extend": "^1.0.0-beta.36"
   },
