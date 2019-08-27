@@ -1,8 +1,11 @@
-import {SafeAreaView, Text, View} from 'react-native'
+import {SafeAreaView, Text, TouchableOpacity} from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {walletEffect} from '@/effects/wallet.effect'
+import {useNavigation} from 'react-navigation-hooks'
+import {walletStore} from '@/stores/wallet.store'
 
 export const Home: React.FC = () => {
+  const {navigate} = useNavigation()
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
   
@@ -36,6 +39,25 @@ export const Home: React.FC = () => {
             `${balance} FSN`
         }
       </Text>
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#81AFE0',
+          padding: 10,
+          margin: 10,
+          width: '100%'
+        }}
+        onPress={async () => {
+          await walletStore.deletePrivateKey()
+          navigate('AccessWallet')
+        }}
+      >
+        <Text style={{
+          color: 'white',
+          fontSize: 16,
+        }}>
+          Log out
+        </Text>
+      </TouchableOpacity>
     </SafeAreaView>
   )
 }

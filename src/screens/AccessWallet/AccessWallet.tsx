@@ -1,12 +1,4 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableHighlight,
-  TouchableOpacityComponent,
-  TouchableOpacity,
-  SafeAreaView
-} from 'react-native'
+import {SafeAreaView, Text, TextInput, TouchableOpacity, View} from 'react-native'
 import React, {useState} from 'react'
 import {MyEtherWallet} from '@/libs/myetherwallet'
 import {walletStore} from '@/stores/wallet.store'
@@ -14,7 +6,7 @@ import {useNavigation} from 'react-navigation-hooks'
 
 export const AccessWallet: React.FC = () => {
   const [privateKey, setPrivateKey] = useState('B2A6B4E1E510FE05AB051C9944B433427D90F2D117E1B32248A1B811BCDB54F9')
-  const { navigate } = useNavigation()
+  const {navigate} = useNavigation()
   
   async function onUnlock() {
     if (privateKey) {

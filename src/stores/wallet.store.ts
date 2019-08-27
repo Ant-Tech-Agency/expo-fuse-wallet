@@ -22,6 +22,14 @@ export class WalletStore {
     
     }
   }
+  
+  async deletePrivateKey() {
+    try {
+      return await SecureStore.deleteItemAsync(this.PRIVATE_KEY)
+    } catch (e) {
+    
+    }
+  }
 }
 
 export const walletStore = new WalletStore()
