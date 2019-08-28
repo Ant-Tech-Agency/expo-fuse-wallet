@@ -2,7 +2,7 @@
   "expo": {
     "name": "com.anttech.fusionwallet",
     "slug": "fusion-wallet",
-    "privacy": "private",
+    "privacy": "unlisted",
     "sdkVersion": "34.0.0",
     "platforms": [
       "ios",
