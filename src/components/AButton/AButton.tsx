@@ -1,31 +1,52 @@
-import React from "react";
-import { TouchableOpacity, Text, StyleSheet, Dimensions } from "react-native";
-import { colors } from "@/themes";
+import React from "react"
+import { TouchableOpacity, Text, StyleSheet } from "react-native"
+import { colors, metrics } from "@/themes"
 
-const { width, height } = Dimensions.get("window");
-
+// declare props type
 type Props = {
-  onPress?: () => void;
-  title: String;
-  isSmall?: Boolean;
-  right?: Boolean;
-};
+  onPress?: () => void
+  title: String
+  size?: String
+  positions?: String
+}
 export const AButton: React.FC<Props> = (props: Props) => {
-  let styles = props.isSmall ? small : large;
-  return (
-    <TouchableOpacity
-      onPress={props.onPress}
-      style={[styles.container, props.right && r.right]}
-    >
-      <Text style={styles.title}>{props.title}</Text>
-    </TouchableOpacity>
-  );
-};
+  // check size
+  function s() {
+    switch (props.size) {
+      case "small":
+        return small
+      case "large":
+        return large
+      default:
+        return large
+    }
+  }
 
+  //check position
+  function p() {
+    switch (props.positions) {
+      case "right":
+        return position.right
+      case "left":
+        return position.left
+      case "center":
+        return position.center
+      default:
+        return position.center
+    }
+  }
+  return (
+    <TouchableOpacity onPress={props.onPress} style={[s().container, p()]}>
+      <Text style={s().title}>{props.title}</Text>
+    </TouchableOpacity>
+  )
+}
+
+//style for large size
 const large = StyleSheet.create({
   container: {
-    width: (width * 85) / 100,
-    height: (width * 12) / 100,
+    width: metrics.button.large.width,
+    height: metrics.button.large.height,
     borderWidth: 1,
     borderColor: colors.border.primary,
     justifyContent: "center",
@@ -34,13 +55,15 @@ const large = StyleSheet.create({
   },
   title: {
     color: "white",
-    fontSize: (width * 5) / 100
+    fontSize: metrics.font.text.t1
   }
-});
+})
+
+//style for small size
 const small = StyleSheet.create({
   container: {
-    width: (width * 30) / 100,
-    height: (width * 6) / 100,
+    width: metrics.button.small.width,
+    height: metrics.button.small.height,
     borderColor: colors.black,
     borderWidth: 1,
     justifyContent: "center",
@@ -50,12 +73,19 @@ const small = StyleSheet.create({
   },
   title: {
     color: "white",
-    fontSize: (width * 4) / 100
+    fontSize: metrics.font.text.t2
   }
-});
+})
 
-const r = StyleSheet.create({
+//style for position
+const position = StyleSheet.create({
   right: {
     alignSelf: "flex-end"
+  },
+  center: {
+    alignSelf: "center"
+  },
+  left: {
+    alignSelf: "flex-start"
   }
-});
+})

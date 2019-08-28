@@ -1,24 +1,26 @@
-import React, { useRef } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
-import {colors, metrics} from '@/themes'
+import React, { useRef } from "react"
+import { StyleSheet, Text, TextInput, View } from "react-native"
+import { colors, metrics } from "@/themes"
 export const AInput = props => {
-  const inputEl = useRef(null);
+  const inputEl = useRef(null)
   function focus() {
-    inputEl.current.focus();
+    inputEl.current.focus()
   }
-  const { name } = props;
+  const { name } = props
   return (
     <View style={styles.container}>
       <Text style={styles.text}>{name}</Text>
-      <TextInput {...props} style={styles.input} />
+      <View style={styles.inputCover}>
+        <TextInput {...props} />
+      </View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    marginTop: 10,
+    marginTop: metrics.margin.base,
     alignItems: "center"
   },
   text: {
@@ -27,9 +29,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontWeight: "bold"
   },
-  input: {
+  inputCover: {
     borderWidth: 1,
-    flex: 1,
-    height: 40
+    flex: 1.5,
+    height: metrics.input.large.height,
+    paddingHorizontal: metrics.padding.base,
+    justifyContent: "center"
   }
-});
+})

@@ -5,47 +5,47 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View
-} from "react-native";
-import React, { useEffect, useState } from "react";
-import { WalletEffect, walletEffect } from "@/effects/wallet.effect";
-import { useNavigation } from "react-navigation-hooks";
-import { walletStore } from "@/stores/wallet.store";
-import { colors, images, metrics } from "@/themes";
-import { AInput } from "@/components";
-import { AButton } from "@/components/AButton/AButton";
+} from "react-native"
+import React, { useEffect, useState } from "react"
+import { WalletEffect, walletEffect } from "@/effects/wallet.effect"
+import { useNavigation } from "react-navigation-hooks"
+import { walletStore } from "@/stores/wallet.store"
+import { colors, images, metrics } from "@/themes"
+import { AInput } from "@/components"
+import { AButton } from "@/components/AButton/AButton"
 
 export const Home: React.FC = () => {
-  const { navigate } = useNavigation();
-  const [loading, setLoading] = useState(false);
-  const [balance, setBalance] = useState(0);
-  const [assets, setAssets] = useState({});
+  const { navigate } = useNavigation()
+  const [loading, setLoading] = useState(false)
+  const [balance, setBalance] = useState(0)
+  const [assets, setAssets] = useState({})
 
   useEffect(() => {
-    setLoading(true);
+    setLoading(true)
     walletEffect
       .getAllBalances()
       .then(balances => {
         setBalance(
           balances[walletEffect.FSN_TOKEN_ADDRESS] /
             WalletEffect.normalizeBalance(18)
-        );
-        setAssets(balances);
+        )
+        setAssets(balances)
       })
       .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+        setLoading(false)
+      })
+  }, [])
+
+  async function onLogOut() {
+    await walletStore.deletePrivateKey()
+    navigate("AccessWallet")
+  }
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1
-      }}
-    >
+    <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={"padding"} style={s.container}>
-        <Image style={s.logo} source={require("../../../assets/logo.png")} />
+        <Image style={s.logo} source={images.logo} />
         <Text style={s.titleScreen}>Wallet Info</Text>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={{ flex: 1 }}>
@@ -68,7 +68,7 @@ export const Home: React.FC = () => {
             <View style={{ flex: 1, justifyContent: "center" }}>
               <AInput name={"Asset Name:"} />
               <AInput name={"Supply:"} />
-              <AButton right isSmall title={"Create Asset"} />
+              <AButton positions="right" size="small" title={"Create Asset"} />
             </View>
           </View>
 
@@ -77,44 +77,38 @@ export const Home: React.FC = () => {
             <View style={{ flex: 1, justifyContent: "center" }}>
               <AInput name={"To:"} />
               <AInput name={"Quantity:"} />
-              <AButton right isSmall title={"Send Asset"} />
+              <AButton positions="right" size="small" title={"Send Asset"} />
             </View>
           </View>
-          <AButton
-            onPress={async () => {
-              await walletStore.deletePrivateKey();
-              navigate("AccessWallet");
-            }}
-            title={"Log Out"}
-          />
+          <AButton onPress={onLogOut} title={"Log Out"} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const s = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: "5%",
-    marginBottom: 30,
+    paddingHorizontal: metrics.padding.base,
+    marginBottom: metrics.margin.base
   },
   logo: {
-    height: metrics.screenWidth / 6,
-    width: metrics.screenWidth / 3,
-    marginLeft: "-5%"
+    height: metrics.logo.height,
+    width: metrics.logo.width,
+    marginLeft: -metrics.margin.base
   },
   titleScreen: {
     textDecorationLine: "underline",
     fontWeight: "700",
-    marginTop: "5%",
-    marginBottom: "15%",
+    marginTop: metrics.margin.base,
+    marginBottom: metrics.margin.double,
     fontSize: metrics.font.header.h1,
     textAlign: "center",
     color: colors.text.primary
   },
   wrapBalance: {
-    marginVertical: 10,
+    marginVertical: metrics.margin.base,
     justifyContent: "center"
   },
   textBalance: {
@@ -123,10 +117,10 @@ const s = StyleSheet.create({
     color: colors.text.primary
   },
   publicAddressCover: {
-    marginBottom: 30
+    marginBottom: metrics.margin.triple
   },
   textPublicAddress: {
-    fontSize: metrics.font.text.t2,
+    fontSize: metrics.font.text.t3,
     fontWeight: "600",
     color: colors.text.primary
   },
@@ -139,25 +133,11 @@ const s = StyleSheet.create({
     fontWeight: "700",
     textDecorationLine: "underline",
     color: colors.text.primary,
-    marginBottom: 30
+    marginBottom: metrics.margin.double
   },
   wrapInput: {
     flex: 1,
-    paddingLeft: "10%",
-    paddingRight: "5%",
-    marginBottom: 20
-  },
-  button: {
-    borderWidth: 0.5,
-    marginTop: 5,
-    alignSelf: "flex-end",
-    backgroundColor: "#81AFE0",
-    paddingHorizontal: 10,
-    paddingVertical: 3
-  },
-  titleButton: {
-    textAlign: "right",
-    color: "white",
-    fontSize: 15
+    paddingHorizontal: metrics.padding.base,
+    marginBottom: metrics.padding.base
   }
-});
+})
