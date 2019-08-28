@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native'
 import React, { useEffect, useState } from 'react'
@@ -63,9 +64,10 @@ export const Home: React.FC = () => {
   const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
-  const [assets, setAssets] = useState({})
+  const [assets, setAssets] = useState([])
   const [assetName, setAssetName] = useState('')
   const [supply, setSupply] = useState('')
+  const [pickedAsset, setPickedAsset] = useState(null)
   useEffect(() => {
     setLoading(true)
     walletEffect
@@ -73,18 +75,26 @@ export const Home: React.FC = () => {
       .then(balances => {
         const balance = balances[walletEffect.FSN_TOKEN_ADDRESS] || 0
         setBalance(balance / WalletEffect.normalizeBalance(18))
-        setAssets(balances)
+        const preArr = []
+        for (let a in balances) {
+          let pre = {
+            address: a,
+            value: balances[a],
+          }
+          preArr.push(pre)
+        }
+        setAssets(preArr)
       })
       .finally(() => {
         setLoading(false)
       })
   }, [])
+  console.log(assets)
 
   async function onLogOut() {
     await walletStore.deletePrivateKey()
     navigate('AccessWallet')
   }
-
   async function onCreateAsset() {
     const BN = web3Store.web3.utils.BN as any
 
@@ -92,7 +102,7 @@ export const Home: React.FC = () => {
     console.log(privateKey)
     const publicKey = walletStore.wallet.address
     const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-      "0x"+privateKey
+      '0x' + privateKey
     )
     const sup = supply.toString()
     const totalSupBN = makeBigNumber(sup, 18)
@@ -170,9 +180,33 @@ export const Home: React.FC = () => {
 
           <View style={s.wrapInput}>
             <Text style={s.titleFeature}>{I18n.t('sendAsset')}</Text>
+            {assets.map((e, i) => {
+              return (
+                i !== assets.length - 1 && (
+                  <TouchableOpacity onPress={() => setPickedAsset(e)}>
+                    <View style={{ marginVertical: 5 }}>
+                      <Text numberOfLines={1}>
+                        <Text style={{ fontWeight: 'bold' }}>address: </Text>{' '}
+                        {e.address}
+                      </Text>
+                      <Text>
+                        <Text style={{ fontWeight: 'bold' }}>Value : </Text>
+                        {e.value}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )
+              )
+            })}
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <AInput name={I18n.t('to')} />
               <AInput name={I18n.t('quantity')} />
+              {pickedAsset && (
+                <Text numberOfLines={1}>
+                  <Text style={{ fontWeight: 'bold' }}>Address Picked :</Text>{' '}
+                  {pickedAsset.address}
+                </Text>
+              )}
               <AButton
                 positions="right"
                 size="small"
