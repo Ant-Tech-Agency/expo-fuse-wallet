@@ -1,6 +1,7 @@
 import React, { useRef } from "react"
 import { StyleSheet, Text, TextInput, View } from "react-native"
 import { colors, metrics } from "@/themes"
+
 export const AInput = props => {
   const inputEl = useRef(null)
   function focus() {

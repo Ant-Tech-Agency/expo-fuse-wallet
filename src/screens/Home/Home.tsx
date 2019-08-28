@@ -100,7 +100,6 @@ async function getAllAssets() {
     }
 
     const resAssets = await Promise.all(promises)
-    console.log(resAssets)
     for (let i = 0; i < resAssets.length; i++) {
       const assets = resAssets[i].data
       assets.forEach(asset => {
@@ -127,6 +126,7 @@ export const Home: React.FC = () => {
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
   const [allAsset, setAllAsset] = useState({})
+  
   useEffect(() => {
     setLoading(true)
     walletEffect
@@ -189,6 +189,7 @@ export const Home: React.FC = () => {
           .signAndTransmit(tx, account.signTransaction)
           .then(txHash => {
             console.log('txHash ', txHash)
+            alert(txHash)
           })
           .catch(err => {
             console.log('err1', err)
@@ -225,6 +226,7 @@ export const Home: React.FC = () => {
 		})
 		.then(txHash => {
 			console.log(txHash)
+      alert(txHash)
 		})
 		.catch(err => {
 			console.log('err ', err)
@@ -303,8 +305,8 @@ export const Home: React.FC = () => {
               )
             })}
             <View style={{ flex: 1, justifyContent: 'center' }}>
-              <AInput onChangeText={text => setToAddress(text)} name={I18n.t('to')} />
-              <AInput onChangeText={text => setQuantity(text)} name={I18n.t('quantity')} />
+              <AInput value={toAddress} onChangeText={text => setToAddress(text)} name={I18n.t('to')} />
+              <AInput value={quantity} onChangeText={text => setQuantity(text)} name={I18n.t('quantity')} />
               {pickedAsset && allAsset[pickedAsset.address] && (
                 <Text numberOfLines={1}>
                   <Text style={{ fontWeight: 'bold' }}>Name Picked :</Text>{' '}
