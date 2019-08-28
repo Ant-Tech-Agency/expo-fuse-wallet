@@ -17,6 +17,30 @@ import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { web3Store } from '@/stores/web3.store'
+import axios from 'axios'
+
+const cacheAssets = {
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff': {
+    AssetID: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    CanChange: false,
+    Decimals: 18,
+    Description: "",
+    ID: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    Name: "FUSION",
+    Symbol: "FSN",
+    Total: 81920000000000000000000000,
+  },
+  '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe': {
+    AssetID: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
+    CanChange: false,
+    Decimals: 0,
+    Description: "",
+    ID: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
+    Name: "USAN",
+    Symbol: "",
+    Total: 0,
+  }
+}
 
 function makeBigNumber(amount, decimals) {
   const BN = web3Store.web3.utils.BN as any
@@ -60,6 +84,37 @@ function makeBigNumber(amount, decimals) {
   } catch (err) {}
 }
 
+function getApiServer() {
+  return 'https://testnetasiaapi.fusionnetwork.io'
+}
+
+async function getAllAssets() {
+  try {
+    const resFsn = await axios(getApiServer() + '/fsnprice')
+    const totalAssets = resFsn.data.totalAssets
+    const promises = []
+    for (let i = 0; i < Math.ceil(totalAssets / 100); i++) {
+      promises.push(axios(`${getApiServer()}/assets/all?page=${i}&size=100`))
+    }
+
+    const resAssets = await Promise.all(promises)
+    console.log(resAssets)
+    for (let i = 0; i < resAssets.length; i++) {
+      const assets = resAssets[i].data
+      assets.forEach(asset => {
+        const data = JSON.parse(asset.data)
+        cacheAssets[data.AssetID] = data
+        cacheAssets[data.AssetID].ID = data.AssetID
+        cacheAssets[data.AssetID].Owner = data.fromAddress
+      })
+    }
+
+    return cacheAssets
+  } catch (e) {
+    console.log(e)
+  }
+}
+
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
@@ -68,6 +123,7 @@ export const Home: React.FC = () => {
   const [assetName, setAssetName] = useState('')
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
+
   useEffect(() => {
     setLoading(true)
     walletEffect
@@ -88,13 +144,17 @@ export const Home: React.FC = () => {
       .finally(() => {
         setLoading(false)
       })
+
+    getAllAssets().then(data => {
+      console.log('data ', data)
+    })
   }, [])
-  console.log(assets)
 
   async function onLogOut() {
     await walletStore.deletePrivateKey()
     navigate('AccessWallet')
   }
+
   async function onCreateAsset() {
     const BN = web3Store.web3.utils.BN as any
 
@@ -198,23 +258,51 @@ export const Home: React.FC = () => {
                 )
               )
             })}
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-              <AInput name={I18n.t('to')} />
-              <AInput name={I18n.t('quantity')} />
+            <View style={{flex: 1, justifyContent: 'center'}}>
+              <AInput name={I18n.t('to')}/>
+              <AInput name={I18n.t('quantity')}/>
               {pickedAsset && (
                 <Text numberOfLines={1}>
                   <Text style={{ fontWeight: 'bold' }}>Address Picked :</Text>{' '}
                   {pickedAsset.address}
                 </Text>
               )}
-              <AButton
-                positions="right"
-                size="small"
-                title={I18n.t('sendAsset')}
+              <AButton positions="right" size="small" title={I18n.t('sendAsset')}
+                       onPress={async () => {
+                         const BN = web3Store.web3.utils.BN as any
+                         const privateKey = await walletStore.getPrivateKey()
+                         const asset = '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
+                         const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+                           "0x"+privateKey
+                         )
+                         const amountBNString = new BN(5).toString()
+                         const amount = makeBigNumber(amountBNString, 0)
+
+                         console.log(amount)
+
+                         web3Store.fusion.fsntx.buildSendAssetTx({
+                           from: '0x02b0a51473e9076ae2667b536f9b11077a50b791',
+                           to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
+                           value: amount.toString(),
+                           asset,
+                         })
+                           .then(tx => {
+                             tx.from = '0x02b0a51473e9076ae2667b536f9b11077a50b791'
+                             tx.chainId = 46688
+
+                             return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
+                           })
+                           .then(txHash => {
+                             console.log(txHash)
+                           })
+                           .catch(err => {
+                             console.log('err ', err)
+                           })
+                       }}
               />
             </View>
           </View>
-          <AButton onPress={onLogOut} title={I18n.t('logout')} />
+          <AButton onPress={onLogOut} title={I18n.t('logout')}/>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
