@@ -5,109 +5,134 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from 'react-native'
-import React, {useEffect, useState} from 'react'
-import {WalletEffect, walletEffect} from '@/effects/wallet.effect'
-import {useNavigation} from 'react-navigation-hooks'
-import {walletStore} from '@/stores/wallet.store'
-import {colors, images, metrics} from '@/themes'
-import {AInput} from '@/components'
-import {AButton} from '@/components/AButton/AButton'
+import React, { useEffect, useState } from 'react'
+import { WalletEffect, walletEffect } from '@/effects/wallet.effect'
+import { useNavigation } from 'react-navigation-hooks'
+import { walletStore } from '@/stores/wallet.store'
+import { colors, images, metrics } from '@/themes'
+import { AInput } from '@/components'
+import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
-import {web3Store} from '@/stores/web3.store'
-
-function toHexString(byteArray) {
-  let s = '0x'
-  byteArray.forEach(function (byte) {
-    s += ('0' + (byte & 0xFF).toString(16)).slice(-2)
-  })
-  
-  return s
-}
+import { web3Store } from '@/stores/web3.store'
 
 function makeBigNumber(amount, decimals) {
-  let BN = web3Store.web3.utils.BN;
+  const BN = web3Store.web3.utils.BN as any
+
   try {
-    // Allow .0
-    if (amount.substr(0, 1) == ".") {
-      let a = "0" + amount;
-      amount = a;
+    if (amount.substr(0, 1) == '.') {
+      let a = '0' + amount
+      amount = a
     }
-    let pieces = amount.split(".");
-    let d = parseInt(decimals);
+    let pieces = amount.split('.')
+    let d = parseInt(decimals)
     if (pieces.length === 1) {
-      amount = parseInt(amount);
+      amount = parseInt(amount)
       if (isNaN(amount) || amount < 0) {
-        // error message
-        return;
+        return
       }
-      amount = new BN(amount + "0".repeat(parseInt(decimals)));
+      amount = new BN(amount + '0'.repeat(parseInt(decimals)))
     } else if (pieces.length > 2) {
-      console.log("error");
-      // error message
-      return;
+      console.log('error')
+      return
     } else if (pieces[1].length >= d) {
-      console.log("error");
-      return; // error
+      console.log('error')
+      return // error
     } else {
-      let dec = parseInt(pieces[1]);
-      let reg = new RegExp("^\\d+$"); // numbers only
+      let dec = parseInt(pieces[1])
+      let reg = new RegExp('^\\d+$') // numbers only
       if (isNaN(pieces[1]) || dec < 0 || !reg.test(pieces[1])) {
-        console.log("error");
-        return;
-        // return error
+        console.log('error')
+        return
       }
-      dec = pieces[1];
-      let declen = d - dec.toString().length;
-      amount = parseInt(pieces[0]);
+      dec = pieces[1]
+      let declen = d - dec.toString().length
+      amount = parseInt(pieces[0])
       if (isNaN(amount) || amount < 0) {
-        console.log("error");
-        // error message
-        return;
+        console.log('error')
+        return
       }
-      amount = new BN(amount + dec + "0".repeat(parseInt(declen)));
+      amount = new BN(amount + dec + '0'.repeat(declen))
     }
-    return amount;
-  } catch (err) {
-  }
+    return amount
+  } catch (err) {}
 }
 
 export const Home: React.FC = () => {
-  const {navigate} = useNavigation()
+  const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
   const [assets, setAssets] = useState({})
-  
+  const [assetName, setAssetName] = useState('')
+  const [supply, setSupply] = useState('')
   useEffect(() => {
     setLoading(true)
     walletEffect
       .getAllBalances()
       .then(balances => {
         const balance = balances[walletEffect.FSN_TOKEN_ADDRESS] || 0
-        setBalance(
-          balance /
-          WalletEffect.normalizeBalance(18)
-        )
+        setBalance(balance / WalletEffect.normalizeBalance(18))
         setAssets(balances)
       })
       .finally(() => {
         setLoading(false)
       })
   }, [])
-  
+
   async function onLogOut() {
     await walletStore.deletePrivateKey()
     navigate('AccessWallet')
   }
-  
+
+  async function onCreateAsset() {
+    const BN = web3Store.web3.utils.BN as any
+
+    const privateKey = await walletStore.getPrivateKey()
+    console.log(privateKey)
+    const publicKey = walletStore.wallet.address
+    const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+      "0x"+privateKey
+    )
+    const sup = supply.toString()
+    const totalSupBN = makeBigNumber(sup, 18)
+    const totalSupBNHex = '0x' + totalSupBN.toString(16)
+    web3Store.fusion.fsntx
+      .buildGenAssetTx({
+        from: publicKey,
+        name: assetName,
+        symbol: 'VTV3',
+        decimals: 18,
+        total: totalSupBNHex,
+        description: '{}',
+        canChange: false,
+      })
+      .then(tx => {
+        tx.chainId = 46688
+        tx.from = publicKey
+        const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
+        tx.gasPrice = gasPrice.toString()
+
+        return web3Store.fusion.fsn
+          .signAndTransmit(tx, account.signTransaction)
+          .then(txHash => {
+            console.log('txHash ', txHash)
+          })
+          .catch(err => {
+            console.log('err1', err)
+          })
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
   return (
-    <SafeAreaView style={{flex: 1}}>
+    <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
-        <Image style={s.logo} source={images.logo}/>
+        <Image style={s.logo} source={images.logo} />
         <Text style={s.titleScreen}>{I18n.t('walletInfo')}</Text>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Text style={s.textCategory}>{I18n.t('fusionBalance')}: </Text>
             <View style={s.wrapBalance}>
               <Text style={s.textBalance}>
@@ -122,60 +147,40 @@ export const Home: React.FC = () => {
               </Text>
             </View>
           </View>
-          
+
           <View style={s.wrapInput}>
             <Text style={s.titleFeature}>{I18n.t('assetCreation')}</Text>
-            <View style={{flex: 1, justifyContent: 'center'}}>
-              <AInput name={I18n.t('assetName')}/>
-              <AInput name={I18n.t('supply')}/>
-              <AButton positions="right" size="small" title={I18n.t('createAssets')} onPress={() => {
-                // priv key
-                const account: any = web3Store.web3.eth.accounts.privateKeyToAccount("0xb2a6b4e1e510fe05ab051c9944b433427d90f2d117e1b32248a1b811bcdb54f9")
-  
-  
-//                let totalSupplyString = totalSupply.toString();
-//                let totalSupplyBN = $scope.makeBigNumber(totalSupplyString, decimals);
-//                let totalSupplyBNHex = "0x" + totalSupplyBN.toString(16);
-                
-                web3Store.fusion.fsntx.buildGenAssetTx({
-                  "from": "0x02b0a51473e9076ae2667b536f9b11077a50b791", // public key
-                  "name": "vtv3-token",
-                  "symbol": "VTV3",
-                  "decimals": 18,
-                  "total": "0x21e19e0c9bab2400000",
-                  "description": "{}",
-                  "canChange": false
-                })
-                  .then(tx => {
-                    console.log(tx)
-                    tx.chainId = 46688
-                    tx.from = '0x02b0a51473e9076ae2667b536f9b11077a50b791'
-                    const gasPrice = web3Store.web3.utils.toWei(new web3Store.web3.utils.BN(100), "gwei" as any);
-                    tx.gasPrice = gasPrice.toString()
-                    
-                    return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
-                      .then(txHash => {
-                        console.log('txHash ', txHash)
-                      }).catch(err => {
-                        console.log('err1', err)
-                      })
-                  })
-                  .catch(err => {
-                    console.log(err)
-                  })
-              }}/>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <AInput
+                onChangeText={asset => setAssetName(asset)}
+                name={I18n.t('assetName')}
+              />
+              <AInput
+                onChangeText={sup => setSupply(sup)}
+                name={I18n.t('supply')}
+              />
+              <AButton
+                positions="right"
+                size="small"
+                title={I18n.t('createAssets')}
+                onPress={onCreateAsset}
+              />
             </View>
           </View>
-          
+
           <View style={s.wrapInput}>
             <Text style={s.titleFeature}>{I18n.t('sendAsset')}</Text>
-            <View style={{flex: 1, justifyContent: 'center'}}>
-              <AInput name={I18n.t('to')}/>
-              <AInput name={I18n.t('quantity')}/>
-              <AButton positions="right" size="small" title={I18n.t('sendAsset')}/>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <AInput name={I18n.t('to')} />
+              <AInput name={I18n.t('quantity')} />
+              <AButton
+                positions="right"
+                size="small"
+                title={I18n.t('sendAsset')}
+              />
             </View>
           </View>
-          <AButton onPress={onLogOut} title={I18n.t('logout')}/>
+          <AButton onPress={onLogOut} title={I18n.t('logout')} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -186,12 +191,12 @@ const s = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: metrics.padding.base,
-    marginBottom: metrics.margin.base
+    marginBottom: metrics.margin.base,
   },
   logo: {
     height: metrics.logo.height,
     width: metrics.logo.width,
-    marginLeft: -metrics.margin.base
+    marginLeft: -metrics.margin.base,
   },
   titleScreen: {
     textDecorationLine: 'underline',
@@ -200,39 +205,39 @@ const s = StyleSheet.create({
     marginBottom: metrics.margin.double,
     fontSize: metrics.font.header.h1,
     textAlign: 'center',
-    color: colors.text.primary
+    color: colors.text.primary,
   },
   wrapBalance: {
     marginVertical: metrics.margin.base,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   textBalance: {
     fontSize: metrics.font.coin,
     fontWeight: '700',
-    color: colors.text.primary
+    color: colors.text.primary,
   },
   publicAddressCover: {
-    marginBottom: metrics.margin.triple
+    marginBottom: metrics.margin.triple,
   },
   textPublicAddress: {
     fontSize: metrics.font.text.t3,
     fontWeight: '600',
-    color: colors.text.primary
+    color: colors.text.primary,
   },
   textCategory: {
     fontSize: metrics.font.header.h2,
-    color: colors.text.primary
+    color: colors.text.primary,
   },
   titleFeature: {
     fontSize: metrics.font.header.h2,
     fontWeight: '700',
     textDecorationLine: 'underline',
     color: colors.text.primary,
-    marginBottom: metrics.margin.double
+    marginBottom: metrics.margin.double,
   },
   wrapInput: {
     flex: 1,
     paddingHorizontal: metrics.padding.base,
-    marginBottom: metrics.padding.base
-  }
+    marginBottom: metrics.padding.base,
+  },
 })
