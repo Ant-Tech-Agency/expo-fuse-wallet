@@ -89,7 +89,6 @@ export const Home: React.FC = () => {
     const BN = web3Store.web3.utils.BN as any
 
     const privateKey = await walletStore.getPrivateKey()
-    console.log(privateKey)
     const publicKey = walletStore.wallet.address
     const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
       "0x"+privateKey
@@ -174,9 +173,13 @@ export const Home: React.FC = () => {
               <AInput name={I18n.t('to')}/>
               <AInput name={I18n.t('quantity')}/>
               <AButton positions="right" size="small" title={I18n.t('sendAsset')}
-                       onPress={() => {
+                       onPress={async () => {
+                         const BN = web3Store.web3.utils.BN as any
+                         const privateKey = await walletStore.getPrivateKey()
                          const asset = '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
-  
+                         const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+                           "0x"+privateKey
+                         )
                          const amountBNString = new BN(5).toString()
                          const amount = makeBigNumber(amountBNString, 0)
                          
