@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native'
 import React, { useEffect, useState } from 'react'
@@ -16,6 +17,30 @@ import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { web3Store } from '@/stores/web3.store'
+import axios from 'axios'
+
+const cacheAssets = {
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff': {
+    AssetID: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    CanChange: false,
+    Decimals: 18,
+    Description: "",
+    ID: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    Name: "FUSION",
+    Symbol: "FSN",
+    Total: 81920000000000000000000000,
+  },
+  '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe': {
+    AssetID: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
+    CanChange: false,
+    Decimals: 0,
+    Description: "",
+    ID: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
+    Name: "USAN",
+    Symbol: "",
+    Total: 0,
+  }
+}
 
 function makeBigNumber(amount, decimals) {
   const BN = web3Store.web3.utils.BN as any
@@ -59,15 +84,48 @@ function makeBigNumber(amount, decimals) {
   } catch (err) {}
 }
 
+function getApiServer() {
+  return 'https://testnetasiaapi.fusionnetwork.io'
+}
+
+async function getAllAssets() {
+  try {
+    const resFsn = await axios(getApiServer() + '/fsnprice')
+    const totalAssets = resFsn.data.totalAssets
+    const promises = []
+    for (let i = 0; i < Math.ceil(totalAssets / 100); i++) {
+      promises.push(axios(`${getApiServer()}/assets/all?page=${i}&size=100`))
+    }
+
+    const resAssets = await Promise.all(promises)
+    console.log(resAssets)
+    for (let i = 0; i < resAssets.length; i++) {
+      const assets = resAssets[i].data
+      assets.forEach(asset => {
+        const data = JSON.parse(asset.data)
+        cacheAssets[data.AssetID] = data
+        cacheAssets[data.AssetID].ID = data.AssetID
+        cacheAssets[data.AssetID].Owner = data.fromAddress
+      })
+    }
+
+    return cacheAssets
+  } catch (e) {
+    console.log(e)
+  }
+}
+
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
-  const [assets, setAssets] = useState({})
+  const [assets, setAssets] = useState([])
   const [assetName, setAssetName] = useState('')
 	const [toAddress, setToAddress] = useState('')
 	const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
+  const [pickedAsset, setPickedAsset] = useState(null)
+
   useEffect(() => {
     setLoading(true)
     walletEffect
@@ -75,11 +133,23 @@ export const Home: React.FC = () => {
       .then(balances => {
         const balance = balances[walletEffect.FSN_TOKEN_ADDRESS] || 0
         setBalance(balance / WalletEffect.normalizeBalance(18))
-        setAssets(balances)
+        const preArr = []
+        for (let a in balances) {
+          let pre = {
+            address: a,
+            value: balances[a],
+          }
+          preArr.push(pre)
+        }
+        setAssets(preArr)
       })
       .finally(() => {
         setLoading(false)
       })
+
+    getAllAssets().then(data => {
+      console.log('data ', data)
+    })
   }, [])
 
   async function onLogOut() {
@@ -93,7 +163,7 @@ export const Home: React.FC = () => {
     const privateKey = await walletStore.getPrivateKey()
     const publicKey = walletStore.wallet.address
     const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-      "0x"+privateKey
+      '0x' + privateKey
     )
     const sup = supply.toString()
     const totalSupBN = makeBigNumber(sup, 18)
@@ -203,9 +273,33 @@ export const Home: React.FC = () => {
 
           <View style={s.wrapInput}>
             <Text style={s.titleFeature}>{I18n.t('sendAsset')}</Text>
+            {assets.map((e, i) => {
+              return (
+                i !== assets.length - 1 && (
+                  <TouchableOpacity onPress={() => setPickedAsset(e)}>
+                    <View style={{ marginVertical: 5 }}>
+                      <Text numberOfLines={1}>
+                        <Text style={{ fontWeight: 'bold' }}>address: </Text>{' '}
+                        {e.address}
+                      </Text>
+                      <Text>
+                        <Text style={{ fontWeight: 'bold' }}>Value : </Text>
+                        {e.value}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )
+              )
+            })}
             <View style={{flex: 1, justifyContent: 'center'}}>
               <AInput onChangeText={text => setToAddress(text)} name={I18n.t('to')}/>
               <AInput onChangeText={text => setQuantity(text)} name={I18n.t('quantity')}/>
+              {pickedAsset && (
+                <Text numberOfLines={1}>
+                  <Text style={{ fontWeight: 'bold' }}>Address Picked :</Text>{' '}
+                  {pickedAsset.address}
+                </Text>
+              )}
               <AButton positions="right" size="small" title={I18n.t('sendAsset')}
                        onPress={onSendAsset}
               />
