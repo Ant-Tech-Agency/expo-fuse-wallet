@@ -1,39 +1,40 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { walletStore } from '@/stores/wallet.store'
+import { metrics } from '@/themes'
 type Props = {
-	balance: string,
-	loading: string
+	balance: number,
+	loading: boolean
 }
 export const HomeBalance: React.FC <Props> = (props) => {
 	const {balance, loading} = props
 	return (
-		<View style={styles.container}>
-			<Text style={styles.textCategory}>Fusion Balance: </Text>
-			<View style={styles.wrapBalance}>
-				<Text style={styles.textBalance}>
+		<View style={s.container}>
+			<Text style={s.textCategory}>Fusion Balance: </Text>
+			<View style={s.wrapBalance}>
+				<Text style={s.textBalance}>
 					{
 						loading ?
 							'Loading...' :
 							`${balance}`
-					} <Text style={styles.textCategory}>FSN</Text>
+					} <Text style={s.textCategory}>FSN</Text>
 				</Text>
 			</View>
-			<Text style={styles.textCategory}>Public Address:</Text>
-			<Text style={styles.textPublicAddress}>{walletStore.wallet.address}</Text>
+			<Text style={s.textCategory}>Public Address:</Text>
+			<Text style={s.textPublicAddress}>{walletStore.wallet.address}</Text>
 		</View>
 	)
 }
 
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
 	container: {
-		marginBottom: 20,
+		marginBottom: metrics.doubleBase,
 		flex: 1
 	},
 	wrapBalance: {
 
-		marginVertical: 10,
+		marginVertical: metrics.base,
 		justifyContent: 'center'
 	},
 	textBalance: {
@@ -41,10 +42,10 @@ const styles = StyleSheet.create({
 		fontWeight: '700'
 	},
 	textPublicAddress: {
-		fontSize: 20,
+		fontSize: metrics.doubleBase,
 		fontWeight: '600'
 	},
 	textCategory: {
-		fontSize: 20
+		fontSize: metrics.doubleBase
 	}
 })

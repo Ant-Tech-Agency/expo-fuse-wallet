@@ -1,5 +1,6 @@
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { metrics } from '@/themes'
 type Props = {
 	name: string,
 	titleButton: string
@@ -7,16 +8,16 @@ type Props = {
 export const HomeInfo: React.FC <Props> = (props) => {
 	const {name, children, titleButton} = props
 	return (
-		<View style={styles.wrapInput}>
-			<Text style={styles.titleFeature}>
+		<View style={s.wrapInput}>
+			<Text style={s.titleFeature}>
 				{name}
 			</Text>
 			<View style={{flex: 1, justifyContent: 'center'}}>
 				{children}
 				<TouchableOpacity
-					style={styles.button}
+					style={s.button}
 				>
-					<Text style={styles.titleButton}>
+					<Text style={s.titleButton}>
 						{titleButton}
 					</Text>
 				</TouchableOpacity>
@@ -26,7 +27,7 @@ export const HomeInfo: React.FC <Props> = (props) => {
 }
 
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
 	titleFeature: {
 		fontSize: 25,
 		fontWeight: '700',
@@ -41,12 +42,12 @@ const styles = StyleSheet.create({
 		marginTop: 5,
 		alignSelf: 'flex-end',
 		backgroundColor: '#81AFE0',
-		paddingHorizontal: 10,
+		paddingHorizontal: metrics.base,
 		paddingVertical: 3
 	},
 	titleButton: {
 		textAlign: 'right',
 		color: 'white',
-		fontSize: 15
+		fontSize: metrics.font.medium
 	}
 })

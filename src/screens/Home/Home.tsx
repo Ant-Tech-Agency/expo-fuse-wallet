@@ -1,13 +1,11 @@
-import { Image, KeyboardAvoidingView, StyleSheet, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Image, KeyboardAvoidingView, StyleSheet, ScrollView, Text, TouchableOpacity } from 'react-native'
 import React, {useEffect, useState} from 'react'
 import {WalletEffect, walletEffect} from '@/effects/wallet.effect'
 import {useNavigation} from 'react-navigation-hooks'
 import {walletStore} from '@/stores/wallet.store'
 import {images, metrics} from '@/themes'
 import {AInput} from '@/components'
-import Styles from '@/screens/AccessWallet/Styles'
-import { HomeBalance } from '@/screens/Home/components/HomeBalance'
-import { HomeInfo } from '@/screens/Home/components/HomeInfo'
+import { HomeBalance, HomeInfo } from '@/screens/Home/components'
 
 export const Home: React.FC = () => {
   const {navigate} = useNavigation()
@@ -29,9 +27,9 @@ export const Home: React.FC = () => {
   
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
-      <KeyboardAvoidingView behavior="position" enabled style={styles.container}>
-        <Image style={styles.logo} source={images.logo} />
-        <Text style={styles.titleScreen}>
+      <KeyboardAvoidingView behavior="position" enabled style={s.container}>
+        <Image style={s.logo} source={images.logo} />
+        <Text style={s.titleScreen}>
           Wallet Info
         </Text>
         <HomeBalance
@@ -53,7 +51,7 @@ export const Home: React.FC = () => {
 	        <AInput name={'Quantity:'}/>
         </HomeInfo>
         <TouchableOpacity
-        	style={styles.buttonLogOut}
+        	style={s.buttonLogOut}
         	onPress={async () => {
         		await walletStore.deletePrivateKey()
         		navigate('AccessWallet')
@@ -72,35 +70,35 @@ export const Home: React.FC = () => {
 }
 
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
 	container: {
 		flex: 1,
 		paddingHorizontal: '5%',
-		marginBottom: 30
+		marginBottom: metrics.tripleBase
 	},
 	logo: {
 		position: 'absolute',
 		height: metrics.screenWidth / 7,
 		width: metrics.screenWidth / 3,
-		top: 20,
+		top: metrics.doubleBase,
 		left: '-5%'
 	},
 	titleScreen: {
 		marginTop: '20%',
-		marginBottom: 30,
+		marginBottom: metrics.tripleBase,
 		textDecorationLine: 'underline',
 		fontWeight: '700',
-		fontSize: 20,
+		fontSize: metrics.doubleBase,
 		textAlign: 'center'
 	},
 	textCategory: {
-		fontSize: 20
+		fontSize: metrics.doubleBase
 	},
 	buttonLogOut: {
 		alignSelf: 'center',
 		backgroundColor: '#81AFE0',
-		padding: 10,
-		margin: 10,
+		padding: metrics.base,
+		margin: metrics.base,
 		width: '100%'
 	}
 })
