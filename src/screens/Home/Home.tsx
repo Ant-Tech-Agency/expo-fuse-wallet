@@ -122,6 +122,8 @@ export const Home: React.FC = () => {
   const [balance, setBalance] = useState(0)
   const [assets, setAssets] = useState([])
   const [assetName, setAssetName] = useState('')
+	const [toAddress, setToAddress] = useState('')
+	const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
   const [allAsset, setAllAsset] = useState({})
@@ -160,7 +162,6 @@ export const Home: React.FC = () => {
     const BN = web3Store.web3.utils.BN as any
 
     const privateKey = await walletStore.getPrivateKey()
-    console.log(privateKey)
     const publicKey = walletStore.wallet.address
     const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
       '0x' + privateKey
@@ -197,6 +198,38 @@ export const Home: React.FC = () => {
         console.log(err)
       })
   }
+	async function onSendAsset() {
+		const BN = web3Store.web3.utils.BN as any
+		const privateKey = await walletStore.getPrivateKey()
+		const asset = '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
+		const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+			"0x"+privateKey
+		)
+		const amountBNString = new BN(quantity).toString()
+		const amount = makeBigNumber(amountBNString, 0)
+
+		console.log(amount)
+
+		web3Store.fusion.fsntx.buildSendAssetTx({
+			from: walletStore.wallet.address,
+			to: toAddress,
+		//	to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
+			value: amount.toString(),
+			asset,
+		})
+		.then(tx => {
+			tx.from = walletStore.wallet.address
+			tx.chainId = 46688
+
+			return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
+		})
+		.then(txHash => {
+			console.log(txHash)
+		})
+		.catch(err => {
+			console.log('err ', err)
+		})
+	}
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
@@ -270,54 +303,16 @@ export const Home: React.FC = () => {
               )
             })}
             <View style={{ flex: 1, justifyContent: 'center' }}>
-              <AInput name={I18n.t('to')} />
-              <AInput name={I18n.t('quantity')} />
+              <AInput onChangeText={text => setToAddress(text)} name={I18n.t('to')} />
+              <AInput onChangeText={text => setQuantity(text)} name={I18n.t('quantity')} />
               {pickedAsset && allAsset[pickedAsset.address] && (
                 <Text numberOfLines={1}>
                   <Text style={{ fontWeight: 'bold' }}>Address Picked :</Text>{' '}
                   {allAsset[pickedAsset.address].Name}
                 </Text>
               )}
-              <AButton
-                positions="right"
-                size="small"
-                title={I18n.t('sendAsset')}
-                onPress={async () => {
-                  const BN = web3Store.web3.utils.BN as any
-                  const privateKey = await walletStore.getPrivateKey()
-                  const asset =
-                    '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
-                  const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-                    '0x' + privateKey
-                  )
-                  const amountBNString = new BN(5).toString()
-                  const amount = makeBigNumber(amountBNString, 0)
-
-                  console.log(amount)
-
-                  web3Store.fusion.fsntx
-                    .buildSendAssetTx({
-                      from: '0x02b0a51473e9076ae2667b536f9b11077a50b791',
-                      to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
-                      value: amount.toString(),
-                      asset,
-                    })
-                    .then(tx => {
-                      tx.from = '0x02b0a51473e9076ae2667b536f9b11077a50b791'
-                      tx.chainId = 46688
-
-                      return web3Store.fusion.fsn.signAndTransmit(
-                        tx,
-                        account.signTransaction
-                      )
-                    })
-                    .then(txHash => {
-                      console.log(txHash)
-                    })
-                    .catch(err => {
-                      console.log('err ', err)
-                    })
-                }}
+              <AButton positions="right" size="small" title={I18n.t('sendAsset')}
+                       onPress={onSendAsset}
               />
             </View>
           </View>
