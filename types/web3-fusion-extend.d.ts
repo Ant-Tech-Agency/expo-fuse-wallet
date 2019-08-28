@@ -7,6 +7,7 @@ declare module 'web3-fusion-extend' {
       getAllBalances(walletAddress: string): Promise<any>,
       getBalance(type: string, walletAddress: string): Promise<any>,
       signAndTransmit(tx: any, signTx: any): Promise<any>
+      genAsset(data: any, pwd: string): Promise<any>
     },
     fsntx: {
       buildGenAssetTx(data: any): Promise<any>

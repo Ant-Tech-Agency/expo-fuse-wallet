@@ -29,7 +29,7 @@
     "react-navigation-hooks": "^1.0.1",
     "rxjs": "^6.5.2",
     "rxjs-compat": "^6.5.2",
-    "web3": "^1.0.0-beta.34",
+    "web3": "^1.2.1",
     "web3-core-helpers": "^1.2.1",
     "web3-fusion-extend": "^1.0.0-beta.36",
     "web3-providers-ws": "^1.2.1",
