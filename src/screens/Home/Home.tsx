@@ -14,6 +14,7 @@ import { walletStore } from "@/stores/wallet.store"
 import { colors, images, metrics } from "@/themes"
 import { AInput } from "@/components"
 import { AButton } from "@/components/AButton/AButton"
+import I18n from '@/i18n'
 
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
@@ -46,10 +47,10 @@ export const Home: React.FC = () => {
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={"padding"} style={s.container}>
         <Image style={s.logo} source={images.logo} />
-        <Text style={s.titleScreen}>Wallet Info</Text>
+        <Text style={s.titleScreen}>{I18n.t('walletInfo')}</Text>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={{ flex: 1 }}>
-            <Text style={s.textCategory}>Fusion Balance: </Text>
+            <Text style={s.textCategory}>{I18n.t('fusionBalance')}: </Text>
             <View style={s.wrapBalance}>
               <Text style={s.textBalance}>
                 {loading ? "Loading..." : `${balance}`}{" "}
@@ -57,30 +58,30 @@ export const Home: React.FC = () => {
               </Text>
             </View>
             <View style={s.publicAddressCover}>
-              <Text style={s.textCategory}>Public Address:</Text>
+              <Text style={s.textCategory}>{I18n.t('publicAddress')}:</Text>
               <Text style={s.textPublicAddress}>
                 {walletStore.wallet.address}
               </Text>
             </View>
           </View>
           <View style={s.wrapInput}>
-            <Text style={s.titleFeature}>Asset Creation</Text>
+            <Text style={s.titleFeature}>{I18n.t('assetCreation')}</Text>
             <View style={{ flex: 1, justifyContent: "center" }}>
-              <AInput name={"Asset Name:"} />
-              <AInput name={"Supply:"} />
-              <AButton positions="right" size="small" title={"Create Asset"} />
+              <AInput name={I18n.t('assetName')} />
+              <AInput name={I18n.t('supply')} />
+              <AButton positions="right" size="small" title={I18n.t('createAssets')} />
             </View>
           </View>
 
           <View style={s.wrapInput}>
-            <Text style={s.titleFeature}>Send Asset</Text>
+            <Text style={s.titleFeature}>{I18n.t('sendAsset')}</Text>
             <View style={{ flex: 1, justifyContent: "center" }}>
-              <AInput name={"To:"} />
-              <AInput name={"Quantity:"} />
-              <AButton positions="right" size="small" title={"Send Asset"} />
+              <AInput name={I18n.t('to')} />
+              <AInput name={I18n.t('quantity')} />
+              <AButton positions="right" size="small" title={I18n.t('sendAsset')} />
             </View>
           </View>
-          <AButton onPress={onLogOut} title={"Log Out"} />
+          <AButton onPress={onLogOut} title={I18n.t('logout')} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
