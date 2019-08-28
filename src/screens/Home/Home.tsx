@@ -122,7 +122,7 @@ export const Home: React.FC = () => {
   const [balance, setBalance] = useState(0)
   const [assets, setAssets] = useState([])
   const [assetName, setAssetName] = useState('')
-	const [toAddress, setToAddress] = useState('')
+	const [toAddress, setToAddress] = useState('0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702')
 	const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
@@ -307,7 +307,7 @@ export const Home: React.FC = () => {
               <AInput onChangeText={text => setQuantity(text)} name={I18n.t('quantity')} />
               {pickedAsset && allAsset[pickedAsset.address] && (
                 <Text numberOfLines={1}>
-                  <Text style={{ fontWeight: 'bold' }}>Address Picked :</Text>{' '}
+                  <Text style={{ fontWeight: 'bold' }}>Name Picked :</Text>{' '}
                   {allAsset[pickedAsset.address].Name}
                 </Text>
               )}
