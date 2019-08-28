@@ -14,9 +14,8 @@ import { walletStore } from "@/stores/wallet.store"
 import { useNavigation } from "react-navigation-hooks"
 import { AButton } from "@/components/AButton/AButton"
 import { colors, images, metrics } from "@/themes"
-
+import I18n from "@/i18n"
 export const AccessWallet: React.FC = () => {
-
   const [privateKey, setPrivateKey] = useState(
     "B2A6B4E1E510FE05AB051C9944B433427D90F2D117E1B32248A1B811BCDB54F9"
   )
@@ -35,20 +34,20 @@ export const AccessWallet: React.FC = () => {
   return (
     <SafeAreaView style={s.Container}>
       <Image style={s.logo} source={images.logo} />
-      <Text style={s.title}>Access Existing Wallet</Text>
+      <Text style={s.title}>{I18n.t("accessExitsTitle")}</Text>
       <KeyboardAvoidingView behavior={"position"} style={s.form}>
-        <Text style={s.textKey}>Private Key:</Text>
+        <Text style={s.textKey}>{I18n.t("privateKey")}:</Text>
         <View style={s.inputCover}>
           <TextInput
             autoCapitalize={"none"}
             autoCorrect={false}
-            placeholder={"Enter your private key"}
+            placeholder={I18n.t("enterPrivateKey")}
             style={s.input}
             value={privateKey}
             onChangeText={setPrivateKey}
           />
         </View>
-        <AButton onPress={onUnlock} title={"Open the wallet"} />
+        <AButton onPress={onUnlock} title={I18n.t('openWallet')} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
