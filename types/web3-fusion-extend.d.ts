@@ -11,6 +11,7 @@ declare module 'web3-fusion-extend' {
     },
     fsntx: {
       buildGenAssetTx(data: any): Promise<any>
+      buildSendAssetTx(data: any): Promise<any>
     }
   }
   
