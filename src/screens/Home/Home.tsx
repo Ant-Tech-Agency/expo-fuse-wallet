@@ -17,32 +17,7 @@ import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { web3Store } from '@/stores/web3.store'
-import axios from 'axios'
-
-const cacheAssets = {
-  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff': {
-    AssetID:
-      '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-    CanChange: false,
-    Decimals: 18,
-    Description: '',
-    ID: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-    Name: 'FUSION',
-    Symbol: 'FSN',
-    Total: 81920000000000000000000000,
-  },
-  '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe': {
-    AssetID:
-      '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
-    CanChange: false,
-    Decimals: 0,
-    Description: '',
-    ID: '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
-    Name: 'USAN',
-    Symbol: '',
-    Total: 0,
-  },
-}
+import {assetEffect} from '@/effects/asset.effect'
 
 function makeBigNumber(amount, decimals) {
   const BN = web3Store.web3.utils.BN as any
@@ -86,35 +61,6 @@ function makeBigNumber(amount, decimals) {
   } catch (err) {}
 }
 
-function getApiServer() {
-  return 'https://testnetasiaapi.fusionnetwork.io'
-}
-
-async function getAllAssets() {
-  try {
-    const resFsn = await axios(getApiServer() + '/fsnprice')
-    const totalAssets = resFsn.data.totalAssets
-    const promises = []
-    for (let i = 0; i < Math.ceil(totalAssets / 100); i++) {
-      promises.push(axios(`${getApiServer()}/assets/all?page=${i}&size=100`))
-    }
-
-    const resAssets = await Promise.all(promises)
-    for (let i = 0; i < resAssets.length; i++) {
-      const assets = resAssets[i].data
-      assets.forEach(asset => {
-        const data = JSON.parse(asset.data)
-        cacheAssets[data.AssetID] = data
-        cacheAssets[data.AssetID].ID = data.AssetID
-        cacheAssets[data.AssetID].Owner = data.fromAddress
-      })
-    }
-    return cacheAssets
-  } catch (e) {
-    console.log(e)
-  }
-}
-
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
@@ -147,8 +93,8 @@ export const Home: React.FC = () => {
       .finally(() => {
         setLoading(false)
       })
-
-    getAllAssets().then(data => {
+  
+    assetEffect.getAssets().then(data => {
       setAllAsset(data)
     })
   }, [])
