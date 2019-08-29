@@ -31,7 +31,7 @@ export const Home: React.FC = () => {
   )
   const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
-  const [pickedAsset, setPickedAsset] = useState(null)
+  const [pickedAsset, setPickedAsset] = useState<AssetData>(null)
   const [symbol, setSymbol] = useState('')
   const [isFixed, setIsFixed] = useState(false)
   const [decimals, setDecimals] = useState(0)
@@ -72,7 +72,7 @@ export const Home: React.FC = () => {
 
   async function onSendAsset() {
     await walletEffect.sendAsset({
-      asset: pickedAsset,
+      asset: pickedAsset.ID,
       amount: quantity,
       to: toAddress,
     })
