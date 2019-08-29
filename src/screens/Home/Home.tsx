@@ -34,7 +34,7 @@ export const Home: React.FC = () => {
   const [pickedAsset, setPickedAsset] = useState(null)
   const [symbol, setSymbol] = useState('')
   const [isFixed, setIsFixed] = useState(false)
-
+  const [decimals, setDecimals] = useState(0)
   useEffect(() => {
     setLoading(true)
     init()
@@ -63,10 +63,10 @@ export const Home: React.FC = () => {
   async function onCreateAsset() {
     await walletEffect.createAsset({
       supply,
-      decimals: 18,
+      decimals,
       name: assetName,
       symbol,
-      canChange: false,
+      canChange: isFixed,
     })
   }
 
@@ -119,22 +119,16 @@ export const Home: React.FC = () => {
                 maxLength={4}
                 name={I18n.t('assetSymbol')}
               />
-              <AInput name={I18n.t('decimals')} />
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginVertical: metrics.margin.base,
-                }}
-              >
-                <Text
-                  style={{ fontWeight: 'bold', color: colors.text.primary }}
-                >
-                  {isFixed ? 'Fixed' : 'Changeable'}
-                </Text>
+              <AInput
+                maxLength={2}
+                keyboardType={'number-pad'}
+                onChangeText={decimals => setDecimals(parseInt(decimals))}
+                name={I18n.t('decimals')}
+              />
+              <View style={s.switchCover}>
+                <Text style={s.label}>{isFixed ? 'Changeable' : 'Fixed'}</Text>
                 <Switch
-                  style={{ alignSelf: 'flex-end' }}
+                  style={s.switchButton}
                   value={isFixed}
                   onValueChange={() => setIsFixed(!isFixed)}
                 />
@@ -162,9 +156,8 @@ export const Home: React.FC = () => {
                 name={I18n.t('quantity')}
               />
               {pickedAsset && (
-                <Text numberOfLines={1}>
-                  <Text style={{ fontWeight: 'bold' }}>Asset Picked :</Text>{' '}
-                  {pickedAsset.Name}
+                <Text style={s.labelCover} numberOfLines={1}>
+                  <Text style={s.label}>Asset Picked :</Text> {pickedAsset.Name}
                 </Text>
               )}
               <AButton
@@ -245,5 +238,22 @@ const s = StyleSheet.create({
     flex: 1,
     paddingHorizontal: metrics.padding.base,
     marginBottom: metrics.padding.base,
+  },
+  switchCover: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: metrics.margin.base,
+  },
+  switchButton: {
+    alignSelf: 'flex-end',
+  },
+  label: {
+    fontSize: metrics.font.text.t1,
+    color: colors.text.primary,
+    fontWeight: 'bold',
+  },
+  labelCover: {
+    marginTop: metrics.margin.base,
   },
 })
