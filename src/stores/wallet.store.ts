@@ -1,11 +1,18 @@
 import {MyEtherWallet} from '@/libs/myetherwallet'
 import * as SecureStore from 'expo-secure-store'
+import {Account} from 'web3/eth/accounts'
+import {web3Store} from '@/stores/web3.store'
 
 export class WalletStore {
-  public wallet: MyEtherWallet
+  public wallet?: MyEtherWallet
+  public account?: Account
   private PRIVATE_KEY = 'PRIVATE_KEY'
   
-  constructor() {}
+  async init(privateKey: string) {
+    this.wallet = new MyEtherWallet(privateKey)
+    this.account = web3Store.web3.eth.accounts.privateKeyToAccount(this.wallet.privateKeyHex)
+    await this.persistPrivateKey(privateKey)
+  }
   
   async persistPrivateKey(privateKey: string) {
     try {

@@ -16,50 +16,8 @@ import { colors, images, metrics } from '@/themes'
 import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
-import { web3Store } from '@/stores/web3.store'
-import {assetEffect} from '@/effects/asset.effect'
-
-function makeBigNumber(amount, decimals) {
-  const BN = web3Store.web3.utils.BN as any
-
-  try {
-    if (amount.substr(0, 1) == '.') {
-      let a = '0' + amount
-      amount = a
-    }
-    let pieces = amount.split('.')
-    let d = parseInt(decimals)
-    if (pieces.length === 1) {
-      amount = parseInt(amount)
-      if (isNaN(amount) || amount < 0) {
-        return
-      }
-      amount = new BN(amount + '0'.repeat(parseInt(decimals)))
-    } else if (pieces.length > 2) {
-      console.log('error')
-      return
-    } else if (pieces[1].length >= d) {
-      console.log('error')
-      return // error
-    } else {
-      let dec = parseInt(pieces[1])
-      let reg = new RegExp('^\\d+$') // numbers only
-      if (isNaN(pieces[1]) || dec < 0 || !reg.test(pieces[1])) {
-        console.log('error')
-        return
-      }
-      dec = pieces[1]
-      let declen = d - dec.toString().length
-      amount = parseInt(pieces[0])
-      if (isNaN(amount) || amount < 0) {
-        console.log('error')
-        return
-      }
-      amount = new BN(amount + dec + '0'.repeat(declen))
-    }
-    return amount
-  } catch (err) {}
-}
+import { assetEffect } from '@/effects/asset.effect'
+import { web3Store } from "@/stores/web3.store"
 
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
@@ -72,6 +30,7 @@ export const Home: React.FC = () => {
   )
   const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
+  const [symbol, setSymbol] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
   const [allAsset, setAllAsset] = useState({})
 
@@ -95,105 +54,32 @@ export const Home: React.FC = () => {
       .finally(() => {
         setLoading(false)
       })
-  
+
     assetEffect.getAssets().then(data => {
       setAllAsset(data)
     })
   }, [])
 
-  async function onLogOut() {
-    await walletStore.deletePrivateKey()
-    navigate('AccessWallet')
-  }
-  
-  function onChangeSupply(supply: string) {
-    const sup = supply.toString()
-    const totalSupBN = makeBigNumber(sup, 18)
-    const totalSupBNHex = '0x' + totalSupBN.toString(16)
-    setSupply(totalSupBNHex)
-  }
-  
-  function onChangeQuantity(quantity: string) {
-    const BN = web3Store.web3.utils.BN as any
-    const amountBNString = new BN(quantity).toString()
-    const amount = makeBigNumber(amountBNString, 0)
-    setQuantity(amount)
-  }
-  
+  async function onLogOut() {}
+
   async function onCreateAsset() {
-    const BN = web3Store.web3.utils.BN as any
-
-    const privateKey = await walletStore.getPrivateKey()
-    const publicKey = walletStore.wallet.address
-    const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-      '0x' + privateKey
-    )
-    const sup = supply.toString()
-    const totalSupBN = makeBigNumber(sup, 18)
-    const totalSupBNHex = '0x' + totalSupBN.toString(16)
-    web3Store.fusion.fsntx
-      .buildGenAssetTx({
-        from: publicKey,
-        name: assetName,
-        symbol: 'VTV3',
-        decimals: 18,
-        total: totalSupBNHex,
-        description: '{}',
-        canChange: false,
-      })
-      .then(tx => {
-        tx.chainId = 46688
-        tx.from = publicKey
-        const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
-        tx.gasPrice = gasPrice.toString()
-
-        return web3Store.fusion.fsn
-          .signAndTransmit(tx, account.signTransaction)
-          .then(txHash => {
-            console.log('txHash ', txHash)
-            alert(txHash)
-          })
-          .catch(err => {
-            console.log('err1', err)
-          })
-      })
-      .catch(err => {
-        console.log(err)
-      })
+    await walletEffect.createAsset({
+      supply,
+      decimals: 18,
+      name: assetName,
+      symbol,
+      canChange: false,
+    })
   }
-	async function onSendAsset() {
-		const BN = web3Store.web3.utils.BN as any
-		const privateKey = await walletStore.getPrivateKey()
-		const asset = '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
-		const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-			"0x"+privateKey
-		)
-		const amountBNString = new BN(quantity).toString()
-		const amount = makeBigNumber(amountBNString, 0)
 
-		console.log(amount)
+  async function onSendAsset() {
+    await walletEffect.sendAsset({
+      asset: pickedAsset,
+      amount: quantity,
+      to: toAddress,
+    })
+  }
 
-		web3Store.fusion.fsntx.buildSendAssetTx({
-			from: walletStore.wallet.address,
-			to: toAddress,
-		//	to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
-			value: amount.toString(),
-			asset,
-		})
-		.then(tx => {
-			tx.from = walletStore.wallet.address
-			tx.chainId = 46688
-
-			return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
-		})
-		.then(txHash => {
-			console.log(txHash)
-      alert(txHash)
-		})
-		.catch(err => {
-			console.log('err ', err)
-		})
-	}
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
@@ -220,18 +106,25 @@ export const Home: React.FC = () => {
             <Text style={s.titleFeature}>{I18n.t('assetCreation')}</Text>
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <AInput
+                value={assetName}
                 onChangeText={asset => setAssetName(asset)}
                 name={I18n.t('assetName')}
               />
               <AInput
-                onChangeText={sup => onChangeSupply(sup)}
+                value={supply}
+                onChangeText={value => setSupply(value)}
                 name={I18n.t('supply')}
+              />
+              <AInput
+                value={symbol}
+                onChangeText={value => setSymbol(value)}
+                name={'Symbols'}
               />
               <AButton
                 positions="right"
                 size="small"
                 title={I18n.t('createAssets')}
-                onPress={() => walletEffect.createAsset(assetName, supply)}
+                onPress={onCreateAsset}
               />
             </View>
           </View>
@@ -272,7 +165,7 @@ export const Home: React.FC = () => {
                 name={I18n.t('to')}
               />
               <AInput
-                onChangeText={quantity => onChangeQuantity(quantity)}
+                onChangeText={value => setQuantity(value)}
                 name={I18n.t('quantity')}
               />
               {pickedAsset && (
@@ -285,7 +178,7 @@ export const Home: React.FC = () => {
                 positions="right"
                 size="small"
                 title={I18n.t('sendAsset')}
-                onPress={() => sendAsset(quantity, toAddress, pickedAsset)}
+                onPress={onSendAsset}
               />
             </View>
           </View>

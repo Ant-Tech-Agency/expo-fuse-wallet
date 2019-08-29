@@ -1,33 +1,13 @@
 import { walletStore } from '@/stores/wallet.store'
 import { web3Store } from '@/stores/web3.store'
-type Data = {
-  from: string
-  name: string
-  symbol: string
-  decimals: number
-  total: string
-  description: object
-  canChange: boolean
-  chainId: number
-  gasPrice: string
-}
+import { assetEffect } from "@/effects/asset.effect"
 
 export class WalletEffect {
   readonly FSN_TOKEN_ADDRESS =
     '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-  readonly CHAIN_ID: number = 46688
-  private privateKey: string = walletStore.wallet.address
-  private publicKey: string = walletStore.wallet.address
-  private account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-    '0x' + this.privateKey
-  )
-
-  private gasPrice: string = web3Store.web3.utils
-    .toWei(new BN(100), 'gwei' as any)
-    .toString()
-
-  private dataAsset: Data = null
-
+  
+  readonly CHAIN_ID = 46688
+  
   async getBalance() {
     try {
       const rawBalance = await web3Store.fusion.fsn.getBalance(
@@ -51,32 +31,6 @@ export class WalletEffect {
     }
   }
 
-  async createAsset(data: Data) {
-    try {
-      const BN = web3Store.web3.utils.BN as any
-      const publicKey = walletStore.wallet.address
-      const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
-
-      const tx = await web3Store.fusion.fsntx.buildGenAssetTx({
-        from: this.publicKey,
-        ...data,
-      })
-
-      tx.form = publicKey
-      tx.chainId = 46688
-      tx.gasPrice = gasPrice.toString()
-
-      const result = await web3Store.fusion.fsn.signAndTransmit(
-        tx,
-        this.account.signTransaction
-      )
-
-      return result
-    } catch (e) {
-      return e
-    }
-  }
-
   static normalizeBalance(decimal: number) {
     let returnDecimals = '1'
     for (let i = 0; i < decimal; i++) {
@@ -84,6 +38,93 @@ export class WalletEffect {
     }
 
     return parseInt(returnDecimals)
+  }
+  
+  
+  async createAsset({
+    supply,
+    decimals,
+    name,
+    symbol,
+    canChange = false
+  }: {
+    supply: string
+    name: string
+    decimals: number
+    symbol: string
+    canChange: boolean
+  }) {
+    try {
+      const publicKey = walletStore.wallet.address
+  
+      const totalSupplyBN = web3Store.makeBigNumber(supply, decimals)
+      const totalSupplyBNHex = web3Store.transformToHex(totalSupplyBN)
+      console.log(totalSupplyBNHex)
+  
+      const tx = await web3Store.fusion.fsntx
+        .buildGenAssetTx({
+          from: publicKey,
+          name,
+          symbol,
+          decimals,
+          canChange,
+          total: totalSupplyBNHex,
+          description: '{}',
+        })
+  
+      tx.chainId = 46688
+      tx.from = publicKey
+      tx.gasPrice = web3Store.gasPrice
+      
+      console.log(tx.gasPrice)
+  
+      const txHash = await web3Store.fusion.fsn
+        .signAndTransmit(tx, walletStore.account.signTransaction)
+  
+      alert(txHash)
+    } catch (e) {
+      alert(e && e.message)
+    }
+  }
+  
+  async sendAsset({
+    to,
+    asset,
+    amount
+  }: {
+    to: string,
+    asset: string,
+    amount: string
+  }) {
+    try {
+      const publicKey = walletStore.wallet.address
+      const assetData = assetEffect.cachedAssets[asset]
+      
+      if (!assetData) {
+        alert('Asset invalid')
+        return
+      }
+      
+      const decimals = assetData.Decimals
+      const amountBN = web3Store.makeBigNumber(amount, decimals)
+      
+      const tx = await web3Store.fusion.fsntx.buildSendAssetTx({
+        from: walletStore.wallet.address,
+        to,
+        value: amountBN.toString(),
+        asset,
+      })
+  
+      tx.chainId = 46688
+      tx.from = publicKey
+      tx.gasPrice = web3Store.gasPrice
+      
+      const txHash = await web3Store.fusion.fsn.signAndTransmit(tx, walletStore.account.signTransaction)
+  
+      alert(txHash)
+    } catch (e) {
+      alert(e && e.message)
+    }
   }
 }
 

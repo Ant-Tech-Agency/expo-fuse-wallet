@@ -1,6 +1,9 @@
 import { getFsnPrice, getAssets } from '@/services/fusion.service'
 import { AsyncStorage } from 'react-native'
 import { AssetData } from 'web3-fusion-extend'
+import {web3Store} from '@/stores/web3.store'
+import {walletStore} from '@/stores/wallet.store'
+import BigNumber from 'bignumber.js'
 
 export type CachedAsset = { [key: string]: AssetData }
 
@@ -105,6 +108,7 @@ export class AssetEffect {
       console.log(e)
     }
   }
+  
 }
 
 export const assetEffect = new AssetEffect()
