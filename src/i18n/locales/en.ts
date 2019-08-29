@@ -8,10 +8,14 @@ export const en = {
   publicAddress : "Public Address",
   assetCreation : "Asset Creation",
   assetName : "Asset Name",
-  supply: "Supply",
+  supply: "ToTal Supply",
   createAssets : "Create Asset",
   sendAsset : "Send Asset",
   to: "To",
   quantity: "Quantity",
-  logout: "Log Out"
+  logout: "Log Out",
+  assetSymbol: "Asset Symbol",
+  decimals:"Decimals",
+  fixed: "Fixed",
+  changeable: "Changeable",
 }

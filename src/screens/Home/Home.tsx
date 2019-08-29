@@ -4,6 +4,7 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -85,7 +86,8 @@ export const Home: React.FC = () => {
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
   const [allAsset, setAllAsset] = useState([])
-
+  const [symbol, setSymbol] = useState('')
+  const [isFixed, setIsFixed] = useState(false)
   useEffect(() => {
     setLoading(true)
     init()
@@ -191,6 +193,8 @@ export const Home: React.FC = () => {
         console.log('err ', err)
       })
   }
+
+  console.log(symbol)
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
@@ -224,6 +228,28 @@ export const Home: React.FC = () => {
                 onChangeText={sup => setSupply(sup)}
                 name={I18n.t('supply')}
               />
+              <AInput
+                onChangeText={s => setSymbol(s.toUpperCase())}
+                autoCapitalize={'characters'}
+                maxLength={4}
+                name={I18n.t('assetSymbol')}
+              />
+              <AInput name={I18n.t('decimals')} />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginVertical:metrics.margin.base
+                }}
+              >
+                <Text style={{fontWeight:'bold', color:colors.text.primary, }}>{isFixed ? 'Fixed' : 'Changeable'}</Text>
+                <Switch
+                  style={{ alignSelf: 'flex-end' }}
+                  value={isFixed}
+                  onValueChange={() => setIsFixed(!isFixed)}
+                />
+              </View>
               <AButton
                 positions="right"
                 size="small"
