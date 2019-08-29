@@ -18,7 +18,7 @@ import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { web3Store } from '@/stores/web3.store'
 import axios from 'axios'
-
+import { sendAsset } from '@/effects/asset.effect'
 const cacheAssets = {
   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff': {
     AssetID:
@@ -159,68 +159,20 @@ export const Home: React.FC = () => {
     await walletStore.deletePrivateKey()
     navigate('AccessWallet')
   }
+  function onChangeSupply(supply: string) {
+    const sup = supply.toString()
+    const totalSupBN = makeBigNumber(sup, 18)
+    const totalSupBNHex = '0x' + totalSupBN.toString(16)
+    setSupply(totalSupBNHex)
+  }
 
-  async function onCreateAsset() {
-    try {
-      const BN = web3Store.web3.utils.BN as any
-      const privateKey = await walletStore.getPrivateKey()
-      const publicKey = walletStore.wallet.address
-      const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-        '0x' + privateKey
-      )
-      const sup = supply.toString()
-      const totalSupBN = makeBigNumber(sup, 18)
-      const totalSupBNHex = '0x' + totalSupBN.toString(16)
-      const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
-      const data = {
-        from: publicKey,
-        name: assetName,
-        symbol: 'VTV3',
-        decimals: 18,
-        total: totalSupBNHex,
-        description: '{}',
-        canChange: false,
-      }
-      const tx = await web3Store.fusion.fsntx.buildGenAssetTx(data)
-      tx.form = publicKey
-      tx.chainId = 46688
-      tx.gasPrice = gasPrice.toString()
-      const result = await web3Store.fusion.fsn.signAndTransmit(
-        tx,
-        account.signTransaction
-      )
-      console.log(result)
-    } catch (e) {
-      console.log(e)
-    }
+  function onChangeQuantity(quantity: string) {
+    const BN = web3Store.web3.utils.BN as any
+    const amountBNString = new BN(quantity).toString()
+    const amount = makeBigNumber(amountBNString, 0)
+    setQuantity(amount)
   }
-  async function onSendAsset() {
-    try {
-      const BN = web3Store.web3.utils.BN as any
-      const privateKey = await walletStore.getPrivateKey()
-      const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-        '0x' + privateKey
-      )
-      const amountBNString = new BN(quantity).toString()
-      const amount = makeBigNumber(amountBNString, 0)
-      const data = {
-        from: walletStore.wallet.address,
-        to: toAddress,
-        value: amount.toString(),
-        asset: pickedAsset.AssetID,
-      }
-      const tx = await web3Store.fusion.fsntx.buildSendAssetTx(data)
-      tx.from = walletStore.wallet.address
-      tx.chainId = 46688
-      const result = await web3Store.fusion.fsn.signAndTransmit(
-        tx,
-        account.signTransaction
-      )
-      alert(result)
-    } catch (e) {
-      console.log(e)
-    }
-  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
@@ -251,14 +203,14 @@ export const Home: React.FC = () => {
                 name={I18n.t('assetName')}
               />
               <AInput
-                onChangeText={sup => setSupply(sup)}
+                onChangeText={sup => onChangeSupply(sup)}
                 name={I18n.t('supply')}
               />
               <AButton
                 positions="right"
                 size="small"
                 title={I18n.t('createAssets')}
-                onPress={onCreateAsset}
+                onPress={() => walletEffect.createAsset(assetName, supply)}
               />
             </View>
           </View>
@@ -299,8 +251,7 @@ export const Home: React.FC = () => {
                 name={I18n.t('to')}
               />
               <AInput
-                value={quantity}
-                onChangeText={text => setQuantity(text)}
+                onChangeText={quantity => onChangeQuantity(quantity)}
                 name={I18n.t('quantity')}
               />
               {pickedAsset && (
@@ -313,7 +264,7 @@ export const Home: React.FC = () => {
                 positions="right"
                 size="small"
                 title={I18n.t('sendAsset')}
-                onPress={onSendAsset}
+                onPress={() => sendAsset(quantity, toAddress, pickedAsset)}
               />
             </View>
           </View>
