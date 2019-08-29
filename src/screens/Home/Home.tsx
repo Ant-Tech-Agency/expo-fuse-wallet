@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native'
 import React, { useEffect, useState } from 'react'
@@ -18,7 +17,8 @@ import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { assetEffect } from '@/effects/asset.effect'
-import { web3Store } from "@/stores/web3.store"
+import { AssetData } from 'web3-fusion-extend'
+import { AssetItem } from '@/screens/Home/components'
 
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
@@ -32,10 +32,9 @@ export const Home: React.FC = () => {
   const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
-  const [allAsset, setAllAsset] = useState([])
   const [symbol, setSymbol] = useState('')
   const [isFixed, setIsFixed] = useState(false)
-  
+
   useEffect(() => {
     setLoading(true)
     init()
@@ -44,19 +43,16 @@ export const Home: React.FC = () => {
   }, [])
 
   async function init() {
-    const preArr = []
     const balances = await walletEffect.getAllBalances()
-    const allAsset = await assetEffect.getAssets()
-    const balance = balances[walletEffect.FSN_TOKEN_ADDRESS] || 0
-    for (let a in balances) {
-      let asset = allAsset[a]
-      preArr.push(asset)
-      console.log(a)
-    }
-    preArr.pop()
-    console.log(preArr)
+    const assets = await assetEffect.getAssets()
+    const balance = balances[WalletEffect.FSN_TOKEN_ADDRESS] || 0
+    const userAssets = Object.keys(balances).reduce((acc, key) => {
+      const asset = assets[key]
+      asset.Amount = balances[key]
+      return acc.concat(assets[key])
+    }, [])
     setBalance(balance / WalletEffect.normalizeBalance(18))
-    setAllAsset(preArr)
+    setAssets(userAssets)
   }
 
   async function onLogOut() {
@@ -129,10 +125,14 @@ export const Home: React.FC = () => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginVertical:metrics.margin.base
+                  marginVertical: metrics.margin.base,
                 }}
               >
-                <Text style={{fontWeight:'bold', color:colors.text.primary, }}>{isFixed ? 'Fixed' : 'Changeable'}</Text>
+                <Text
+                  style={{ fontWeight: 'bold', color: colors.text.primary }}
+                >
+                  {isFixed ? 'Fixed' : 'Changeable'}
+                </Text>
                 <Switch
                   style={{ alignSelf: 'flex-end' }}
                   value={isFixed}
@@ -174,12 +174,12 @@ export const Home: React.FC = () => {
                 onPress={onSendAsset}
               />
             </View>
-            {allAsset.length > 0 &&
-              allAsset.map((d: Asset, i) => {
+            {assets.length > 0 &&
+              assets.map((asset: AssetData, i) => {
                 return (
                   <AssetItem
                     key={i.toString()}
-                    element={d}
+                    asset={asset}
                     index={i}
                     onPress={e => setPickedAsset(e)}
                   />

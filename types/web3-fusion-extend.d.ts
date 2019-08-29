@@ -112,6 +112,8 @@ declare module 'web3-fusion-extend' {
 
   export type AssetData = {
     ID?: string
+    Owner?: string
+    Amount?: number
     AssetID: string
     CanChange: false
     Decimals: number

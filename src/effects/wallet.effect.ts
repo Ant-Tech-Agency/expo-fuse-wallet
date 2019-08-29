@@ -3,7 +3,7 @@ import { web3Store } from '@/stores/web3.store'
 import { assetEffect } from "@/effects/asset.effect"
 
 export class WalletEffect {
-  readonly FSN_TOKEN_ADDRESS =
+  static readonly FSN_TOKEN_ADDRESS =
     '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
   
   readonly CHAIN_ID = 46688
@@ -11,7 +11,7 @@ export class WalletEffect {
   async getBalance() {
     try {
       const rawBalance = await web3Store.fusion.fsn.getBalance(
-        this.FSN_TOKEN_ADDRESS,
+        WalletEffect.FSN_TOKEN_ADDRESS,
         walletStore.wallet.address
       )
 

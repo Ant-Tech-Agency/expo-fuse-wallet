@@ -98,9 +98,10 @@ export class AssetEffect {
           cachedAssets[data.AssetID] = data
         })
       }
+      
       this.cachedAssets = cachedAssets
 
-      return cachedAssets
+      return this.cachedAssets
     } catch (e) {
       console.log(e)
     }
