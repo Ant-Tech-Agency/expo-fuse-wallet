@@ -105,6 +105,7 @@ export class AssetEffect {
       console.log(e)
     }
   }
+  
 }
 
 export const assetEffect = new AssetEffect()

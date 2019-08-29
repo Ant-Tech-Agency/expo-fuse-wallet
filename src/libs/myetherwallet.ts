@@ -1,44 +1,44 @@
 import * as ethUtil from 'ethereumjs-util'
 
 export class MyEtherWallet {
-  private readonly privateKey: Buffer
-  private readonly publicKey: Buffer
+  readonly privateKey: string
+  private readonly privateKeyRaw: Buffer
+  private readonly publicKeyRaw: Buffer
   private readonly prefix = '0x'
   
   constructor(
     privateKey: string,
     publicKey?: string
   ) {
-    this.privateKey = new Buffer(privateKey, 'hex')
+    this.privateKeyRaw = new Buffer(privateKey, 'hex')
+    this.privateKey = privateKey
     
     if (publicKey) {
-      this.publicKey = new Buffer(publicKey, 'hex')
+      this.publicKeyRaw = new Buffer(publicKey, 'hex')
     }
-  }
-  
-  static fixPrivateKey(key: string) {
-    if (key.indexOf("0x") === 0) {
-      return key.slice(2);
-    }
-    
-    return key
   }
   
   get addressRaw() {
-    if (!this.publicKey) {
-      return ethUtil.privateToAddress(this.privateKey as Buffer)
+    if (this.privateKeyRaw) {
+      return ethUtil.privateToAddress(this.privateKeyRaw)
     }
     
-    return ethUtil.publicToAddress(this.publicKey, true)
+    if (this.publicKeyRaw) {
+      return ethUtil.publicToAddress(this.publicKeyRaw, true)
+    }
+    
+    return ''
   }
   
   get address() {
     return this.prefix + this.addressRaw.toString('hex')
   }
   
+  get privateKeyHex() {
+    return '0x' + this.privateKey
+  }
+  
   get checksumAddress() {
     return ethUtil.toChecksumAddress(this.address)
   }
-  
-  
 }

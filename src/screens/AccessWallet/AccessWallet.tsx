@@ -23,8 +23,7 @@ export const AccessWallet: React.FC = () => {
 
   async function onUnlock() {
     if (privateKey) {
-      walletStore.wallet = new MyEtherWallet(privateKey)
-      await walletStore.persistPrivateKey(privateKey)
+      await walletStore.init(privateKey)
       navigate("Home")
     } else {
       alert("Please enter your private key")
