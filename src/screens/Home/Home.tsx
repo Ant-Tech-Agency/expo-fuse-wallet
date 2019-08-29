@@ -121,12 +121,14 @@ export const Home: React.FC = () => {
   const [balance, setBalance] = useState(0)
   const [assets, setAssets] = useState([])
   const [assetName, setAssetName] = useState('')
-	const [toAddress, setToAddress] = useState('0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702')
-	const [quantity, setQuantity] = useState('')
+  const [toAddress, setToAddress] = useState(
+    '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702'
+  )
+  const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
   const [allAsset, setAllAsset] = useState({})
-  
+
   useEffect(() => {
     setLoading(true)
     walletEffect
@@ -159,18 +161,18 @@ export const Home: React.FC = () => {
   }
 
   async function onCreateAsset() {
-    const BN = web3Store.web3.utils.BN as any
-
-    const privateKey = await walletStore.getPrivateKey()
-    const publicKey = walletStore.wallet.address
-    const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-      '0x' + privateKey
-    )
-    const sup = supply.toString()
-    const totalSupBN = makeBigNumber(sup, 18)
-    const totalSupBNHex = '0x' + totalSupBN.toString(16)
-    web3Store.fusion.fsntx
-      .buildGenAssetTx({
+    try {
+      const BN = web3Store.web3.utils.BN as any
+      const privateKey = await walletStore.getPrivateKey()
+      const publicKey = walletStore.wallet.address
+      const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+        '0x' + privateKey
+      )
+      const sup = supply.toString()
+      const totalSupBN = makeBigNumber(sup, 18)
+      const totalSupBNHex = '0x' + totalSupBN.toString(16)
+      const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
+      const data = {
         from: publicKey,
         name: assetName,
         symbol: 'VTV3',
@@ -178,60 +180,47 @@ export const Home: React.FC = () => {
         total: totalSupBNHex,
         description: '{}',
         canChange: false,
-      })
-      .then(tx => {
-        tx.chainId = 46688
-        tx.from = publicKey
-        const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
-        tx.gasPrice = gasPrice.toString()
-
-        return web3Store.fusion.fsn
-          .signAndTransmit(tx, account.signTransaction)
-          .then(txHash => {
-            console.log('txHash ', txHash)
-            alert(txHash)
-          })
-          .catch(err => {
-            console.log('err1', err)
-          })
-      })
-      .catch(err => {
-        console.log(err)
-      })
+      }
+      const tx = await web3Store.fusion.fsntx.buildGenAssetTx(data)
+      tx.form = publicKey
+      tx.chainId = 46688
+      tx.gasPrice = gasPrice.toString()
+      const result = await web3Store.fusion.fsn.signAndTransmit(
+        tx,
+        account.signTransaction
+      )
+      console.log(result)
+    } catch (e) {
+      console.log(e)
+    }
   }
-	async function onSendAsset() {
-		const BN = web3Store.web3.utils.BN as any
-		const privateKey = await walletStore.getPrivateKey()
-		const asset = '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
-		const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-			"0x"+privateKey
-		)
-		const amountBNString = new BN(quantity).toString()
-		const amount = makeBigNumber(amountBNString, 0)
-
-		console.log(amount)
-
-		web3Store.fusion.fsntx.buildSendAssetTx({
-			from: walletStore.wallet.address,
-			to: toAddress,
-		//	to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
-			value: amount.toString(),
-			asset,
-		})
-		.then(tx => {
-			tx.from = walletStore.wallet.address
-			tx.chainId = 46688
-
-			return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
-		})
-		.then(txHash => {
-			console.log(txHash)
-      alert(txHash)
-		})
-		.catch(err => {
-			console.log('err ', err)
-		})
-	}
+  async function onSendAsset() {
+    try {
+      const BN = web3Store.web3.utils.BN as any
+      const privateKey = await walletStore.getPrivateKey()
+      const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+        '0x' + privateKey
+      )
+      const amountBNString = new BN(quantity).toString()
+      const amount = makeBigNumber(amountBNString, 0)
+      const data = {
+        from: walletStore.wallet.address,
+        to: toAddress,
+        value: amount.toString(),
+        asset: pickedAsset.AssetID,
+      }
+      const tx = await web3Store.fusion.fsntx.buildSendAssetTx(data)
+      tx.from = walletStore.wallet.address
+      tx.chainId = 46688
+      const result = await web3Store.fusion.fsn.signAndTransmit(
+        tx,
+        account.signTransaction
+      )
+      alert(result)
+    } catch (e) {
+      console.log(e)
+    }
+  }
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
@@ -280,11 +269,10 @@ export const Home: React.FC = () => {
               const d = allAsset[e.address]
               return (
                 i !== assets.length - 1 &&
-                d &&
-                (
+                d && (
                   <TouchableOpacity
                     key={i.toString()}
-                    onPress={() => setPickedAsset(e)}
+                    onPress={() => setPickedAsset(d)}
                   >
                     <View style={{ marginVertical: 5 }}>
                       <Text numberOfLines={1}>
@@ -305,16 +293,27 @@ export const Home: React.FC = () => {
               )
             })}
             <View style={{ flex: 1, justifyContent: 'center' }}>
-              <AInput value={toAddress} onChangeText={text => setToAddress(text)} name={I18n.t('to')} />
-              <AInput value={quantity} onChangeText={text => setQuantity(text)} name={I18n.t('quantity')} />
-              {pickedAsset && allAsset[pickedAsset.address] && (
+              <AInput
+                value={toAddress}
+                onChangeText={text => setToAddress(text)}
+                name={I18n.t('to')}
+              />
+              <AInput
+                value={quantity}
+                onChangeText={text => setQuantity(text)}
+                name={I18n.t('quantity')}
+              />
+              {pickedAsset && (
                 <Text numberOfLines={1}>
                   <Text style={{ fontWeight: 'bold' }}>Name Picked :</Text>{' '}
-                  {allAsset[pickedAsset.address].Name}
+                  {pickedAsset.Name}
                 </Text>
               )}
-              <AButton positions="right" size="small" title={I18n.t('sendAsset')}
-                       onPress={onSendAsset}
+              <AButton
+                positions="right"
+                size="small"
+                title={I18n.t('sendAsset')}
+                onPress={onSendAsset}
               />
             </View>
           </View>
