@@ -1,60 +1,110 @@
-import { web3Store } from '@/stores/web3.store'
-import { walletStore } from '@/stores/wallet.store'
+import { getFsnPrice, getAssets } from '@/services/fusion.service'
+import { AsyncStorage } from 'react-native'
+import { AssetData } from 'web3-fusion-extend'
 
-// export const createAsset = async (totalSupBNHex, assetName) => {
-//   try {
-//     const BN = web3Store.web3.utils.BN as any
-//     const privateKey = await walletStore.getPrivateKey()
-//     const publicKey = walletStore.wallet.address
-//     const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-//       '0x' + privateKey
-//     )
-//     const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
-//     const data = {
-//       from: publicKey,
-//       name: assetName,
-//       symbol: 'VTV3',
-//       decimals: 18,
-//       total: totalSupBNHex,
-//       description: '{}',
-//       canChange: false,
-//     }
-//     const tx = await web3Store.fusion.fsntx.buildGenAssetTx(data)
-//     tx.form = publicKey
-//     tx.chainId = 46688
-//     tx.gasPrice = gasPrice.toString()
-//     const result = await web3Store.fusion.fsn.signAndTransmit(
-//       tx,
-//       account.signTransaction
-//     )
-//     console.log(result)
-//     alert(result)
-//   } catch (e) {
-//     console.log(e)
-//   }
-// }
+export type CachedAsset = { [key: string]: AssetData }
 
-export const sendAsset = async (amount, toAddress, pickedAsset) => {
-  try {
-    const privateKey = await walletStore.getPrivateKey()
-    const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-      '0x' + privateKey
-    )
-    const data = {
-      from: walletStore.wallet.address,
-      to: toAddress,
-      value: amount.toString(),
-      asset: pickedAsset.AssetID,
+const defaultCachedAssets: CachedAsset = {
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff': {
+    AssetID:
+      '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    CanChange: false,
+    Decimals: 18,
+    Description: '',
+    ID: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    Name: 'FUSION',
+    Symbol: 'FSN',
+    Total: 81920000000000000000000000,
+  },
+  '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe': {
+    AssetID:
+      '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
+    CanChange: false,
+    Decimals: 0,
+    Description: '',
+    ID: '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
+    Name: 'USAN',
+    Symbol: '',
+    Total: 0,
+  },
+}
+
+export class AssetEffect {
+  private _cachedAssets: CachedAsset = {}
+  public static CACHED_ASSETS = 'CACHED_ASSETS'
+  
+  constructor() {
+    this.getCachedAssets()
+      .then(data => {
+        this._cachedAssets = data
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
+  get cachedAssets(): CachedAsset {
+    return this._cachedAssets
+  }
+
+  set cachedAssets(value: CachedAsset) {
+    AsyncStorage.setItem(AssetEffect.CACHED_ASSETS, JSON.stringify(value))
+      .then(data => {
+        console.log(data)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+
+    this._cachedAssets = Object.assign({}, defaultCachedAssets, value)
+  }
+  
+  async getCachedAssets() {
+    try {
+      const data = await AsyncStorage.getItem(AssetEffect.CACHED_ASSETS)
+  
+      if (data) {
+        this.cachedAssets = JSON.parse(data)
+      } else {
+        this.cachedAssets = {}
+      }
+  
+      return this.cachedAssets
+    } catch (e) {
+      return e
     }
-    const tx = await web3Store.fusion.fsntx.buildSendAssetTx(data)
-    tx.from = walletStore.wallet.address
-    tx.chainId = 46688
-    const result = await web3Store.fusion.fsn.signAndTransmit(
-      tx,
-      account.signTransaction
-    )
-    alert(result)
-  } catch (e) {
-    console.log(e)
+  }
+
+  async getAssets() {
+    try {
+      const cachedAssets: CachedAsset = {}
+      const resFsn = await getFsnPrice()
+      const totalAssets = resFsn.data.totalAssets
+      const promises = []
+
+      for (let i = 0; i < Math.ceil(totalAssets / 100); i++) {
+        promises.push(getAssets(i))
+      }
+
+      const resAssets = await Promise.all(promises)
+
+      for (let i = 0; i < resAssets.length; i++) {
+        const assets = resAssets[i].data
+        assets.forEach(asset => {
+          const data = JSON.parse(asset.data)
+          data.ID = data.AssetID
+          data.Owner = data.fromAddress
+
+          cachedAssets[data.AssetID] = data
+        })
+      }
+      this.cachedAssets = cachedAssets
+
+      return cachedAssets
+    } catch (e) {
+      console.log(e)
+    }
   }
 }
+
+export const assetEffect = new AssetEffect()

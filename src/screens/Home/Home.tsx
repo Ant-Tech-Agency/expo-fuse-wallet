@@ -17,32 +17,7 @@ import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { web3Store } from '@/stores/web3.store'
-import axios from 'axios'
-import { sendAsset } from '@/effects/asset.effect'
-const cacheAssets = {
-  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff': {
-    AssetID:
-      '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-    CanChange: false,
-    Decimals: 18,
-    Description: '',
-    ID: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-    Name: 'FUSION',
-    Symbol: 'FSN',
-    Total: 81920000000000000000000000,
-  },
-  '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe': {
-    AssetID:
-      '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
-    CanChange: false,
-    Decimals: 0,
-    Description: '',
-    ID: '0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
-    Name: 'USAN',
-    Symbol: '',
-    Total: 0,
-  },
-}
+import {assetEffect} from '@/effects/asset.effect'
 
 function makeBigNumber(amount, decimals) {
   const BN = web3Store.web3.utils.BN as any
@@ -86,35 +61,6 @@ function makeBigNumber(amount, decimals) {
   } catch (err) {}
 }
 
-function getApiServer() {
-  return 'https://testnetasiaapi.fusionnetwork.io'
-}
-
-async function getAllAssets() {
-  try {
-    const resFsn = await axios(getApiServer() + '/fsnprice')
-    const totalAssets = resFsn.data.totalAssets
-    const promises = []
-    for (let i = 0; i < Math.ceil(totalAssets / 100); i++) {
-      promises.push(axios(`${getApiServer()}/assets/all?page=${i}&size=100`))
-    }
-
-    const resAssets = await Promise.all(promises)
-    for (let i = 0; i < resAssets.length; i++) {
-      const assets = resAssets[i].data
-      assets.forEach(asset => {
-        const data = JSON.parse(asset.data)
-        cacheAssets[data.AssetID] = data
-        cacheAssets[data.AssetID].ID = data.AssetID
-        cacheAssets[data.AssetID].Owner = data.fromAddress
-      })
-    }
-    return cacheAssets
-  } catch (e) {
-    console.log(e)
-  }
-}
-
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
@@ -149,8 +95,8 @@ export const Home: React.FC = () => {
       .finally(() => {
         setLoading(false)
       })
-
-    getAllAssets().then(data => {
+  
+    assetEffect.getAssets().then(data => {
       setAllAsset(data)
     })
   }, [])
@@ -159,20 +105,95 @@ export const Home: React.FC = () => {
     await walletStore.deletePrivateKey()
     navigate('AccessWallet')
   }
+  
   function onChangeSupply(supply: string) {
     const sup = supply.toString()
     const totalSupBN = makeBigNumber(sup, 18)
     const totalSupBNHex = '0x' + totalSupBN.toString(16)
     setSupply(totalSupBNHex)
   }
-
+  
   function onChangeQuantity(quantity: string) {
     const BN = web3Store.web3.utils.BN as any
     const amountBNString = new BN(quantity).toString()
     const amount = makeBigNumber(amountBNString, 0)
     setQuantity(amount)
   }
+  
+  async function onCreateAsset() {
+    const BN = web3Store.web3.utils.BN as any
 
+    const privateKey = await walletStore.getPrivateKey()
+    const publicKey = walletStore.wallet.address
+    const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+      '0x' + privateKey
+    )
+    const sup = supply.toString()
+    const totalSupBN = makeBigNumber(sup, 18)
+    const totalSupBNHex = '0x' + totalSupBN.toString(16)
+    web3Store.fusion.fsntx
+      .buildGenAssetTx({
+        from: publicKey,
+        name: assetName,
+        symbol: 'VTV3',
+        decimals: 18,
+        total: totalSupBNHex,
+        description: '{}',
+        canChange: false,
+      })
+      .then(tx => {
+        tx.chainId = 46688
+        tx.from = publicKey
+        const gasPrice = web3Store.web3.utils.toWei(new BN(100), 'gwei' as any)
+        tx.gasPrice = gasPrice.toString()
+
+        return web3Store.fusion.fsn
+          .signAndTransmit(tx, account.signTransaction)
+          .then(txHash => {
+            console.log('txHash ', txHash)
+            alert(txHash)
+          })
+          .catch(err => {
+            console.log('err1', err)
+          })
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+	async function onSendAsset() {
+		const BN = web3Store.web3.utils.BN as any
+		const privateKey = await walletStore.getPrivateKey()
+		const asset = '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
+		const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+			"0x"+privateKey
+		)
+		const amountBNString = new BN(quantity).toString()
+		const amount = makeBigNumber(amountBNString, 0)
+
+		console.log(amount)
+
+		web3Store.fusion.fsntx.buildSendAssetTx({
+			from: walletStore.wallet.address,
+			to: toAddress,
+		//	to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
+			value: amount.toString(),
+			asset,
+		})
+		.then(tx => {
+			tx.from = walletStore.wallet.address
+			tx.chainId = 46688
+
+			return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
+		})
+		.then(txHash => {
+			console.log(txHash)
+      alert(txHash)
+		})
+		.catch(err => {
+			console.log('err ', err)
+		})
+	}
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
