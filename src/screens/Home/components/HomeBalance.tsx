@@ -29,12 +29,12 @@ export const HomeBalance: React.FC <Props> = (props) => {
 
 const s = StyleSheet.create({
 	container: {
-		marginBottom: metrics.doubleBase,
+		marginBottom: metrics.margin.double,
 		flex: 1
 	},
 	wrapBalance: {
 
-		marginVertical: metrics.base,
+		marginVertical: metrics.margin.double,
 		justifyContent: 'center'
 	},
 	textBalance: {
@@ -42,10 +42,10 @@ const s = StyleSheet.create({
 		fontWeight: '700'
 	},
 	textPublicAddress: {
-		fontSize: metrics.doubleBase,
+		fontSize: metrics.font.text.t1,
 		fontWeight: '600'
 	},
 	textCategory: {
-		fontSize: metrics.doubleBase
+		fontSize: metrics.font.text.t1
 	}
 })

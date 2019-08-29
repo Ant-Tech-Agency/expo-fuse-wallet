@@ -17,8 +17,20 @@ import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { web3Store } from '@/stores/web3.store'
-import {assetEffect} from '@/effects/asset.effect'
+import { assetEffect } from '@/effects/asset.effect'
+import { AssetItem } from '@/screens/Home/components'
 
+type Asset = {
+  AssetID: string
+  CanChange: boolean
+  Decimals: number
+  Description: string
+  ID: string
+  Name: string
+  Owner: string | undefined
+  Symbol: string
+  Total: number
+}
 function makeBigNumber(amount, decimals) {
   const BN = web3Store.web3.utils.BN as any
 
@@ -60,44 +72,42 @@ function makeBigNumber(amount, decimals) {
     return amount
   } catch (err) {}
 }
-
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
   const [assets, setAssets] = useState([])
   const [assetName, setAssetName] = useState('')
-	const [toAddress, setToAddress] = useState('0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702')
-	const [quantity, setQuantity] = useState('')
+  const [toAddress, setToAddress] = useState(
+    '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702'
+  )
+  const [quantity, setQuantity] = useState('')
   const [supply, setSupply] = useState('')
   const [pickedAsset, setPickedAsset] = useState(null)
-  const [allAsset, setAllAsset] = useState({})
-  
+  const [allAsset, setAllAsset] = useState([])
+
   useEffect(() => {
     setLoading(true)
-    walletEffect
-      .getAllBalances()
-      .then(balances => {
-        const balance = balances[walletEffect.FSN_TOKEN_ADDRESS] || 0
-        setBalance(balance / WalletEffect.normalizeBalance(18))
-        const preArr = []
-        for (let a in balances) {
-          let pre = {
-            address: a,
-            value: balances[a],
-          }
-          preArr.push(pre)
-        }
-        setAssets(preArr)
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  
-    assetEffect.getAssets().then(data => {
-      setAllAsset(data)
-    })
+    init()
+      .then(e => console.log(e))
+      .finally(() => setLoading(false))
   }, [])
+
+  async function init() {
+    const preArr = []
+    const balances = await walletEffect.getAllBalances()
+    const allAsset = await assetEffect.getAssets()
+    const balance = balances[walletEffect.FSN_TOKEN_ADDRESS] || 0
+    for (let a in balances) {
+      let asset = allAsset[a]
+      preArr.push(asset)
+      console.log(a)
+    }
+    preArr.pop()
+    console.log(preArr)
+    setBalance(balance / WalletEffect.normalizeBalance(18))
+    setAllAsset(preArr)
+  }
 
   async function onLogOut() {
     await walletStore.deletePrivateKey()
@@ -145,39 +155,42 @@ export const Home: React.FC = () => {
         console.log(err)
       })
   }
-	async function onSendAsset() {
-		const BN = web3Store.web3.utils.BN as any
-		const privateKey = await walletStore.getPrivateKey()
-		const asset = '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
-		const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
-			"0x"+privateKey
-		)
-		const amountBNString = new BN(quantity).toString()
-		const amount = makeBigNumber(amountBNString, 0)
 
-		console.log(amount)
+  async function onSendAsset() {
+    const BN = web3Store.web3.utils.BN as any
+    const privateKey = await walletStore.getPrivateKey()
+    const asset =
+      '0x6d8b839b25cae5d9316e2d422983b4b32e54979cb05163d08d61e64b95c8dd68'
+    const account: any = web3Store.web3.eth.accounts.privateKeyToAccount(
+      '0x' + privateKey
+    )
+    const amountBNString = new BN(quantity).toString()
+    const amount = makeBigNumber(amountBNString, 0)
 
-		web3Store.fusion.fsntx.buildSendAssetTx({
-			from: walletStore.wallet.address,
-			to: toAddress,
-		//	to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
-			value: amount.toString(),
-			asset,
-		})
-		.then(tx => {
-			tx.from = walletStore.wallet.address
-			tx.chainId = 46688
+    console.log(amount)
 
-			return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
-		})
-		.then(txHash => {
-			console.log(txHash)
-      alert(txHash)
-		})
-		.catch(err => {
-			console.log('err ', err)
-		})
-	}
+    web3Store.fusion.fsntx
+      .buildSendAssetTx({
+        from: walletStore.wallet.address,
+        to: toAddress,
+        //	to: '0X373974CA4F8985F6FA51AB3F7DE3DD61473BA702',
+        value: amount.toString(),
+        asset,
+      })
+      .then(tx => {
+        tx.from = walletStore.wallet.address
+        tx.chainId = 46688
+
+        return web3Store.fusion.fsn.signAndTransmit(tx, account.signTransaction)
+      })
+      .then(txHash => {
+        console.log(txHash)
+        alert(txHash)
+      })
+      .catch(err => {
+        console.log('err ', err)
+      })
+  }
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior={'padding'} style={s.container}>
@@ -222,47 +235,41 @@ export const Home: React.FC = () => {
 
           <View style={s.wrapInput}>
             <Text style={s.titleFeature}>{I18n.t('sendAsset')}</Text>
-            {assets.map((e, i) => {
-              const d = allAsset[e.address]
-              return (
-                i !== assets.length - 1 &&
-                d &&
-                (
-                  <TouchableOpacity
-                    key={i.toString()}
-                    onPress={() => setPickedAsset(e)}
-                  >
-                    <View style={{ marginVertical: 5 }}>
-                      <Text numberOfLines={1}>
-                        <Text style={{ fontWeight: 'bold' }}>name: </Text>{' '}
-                        {d.Name}
-                      </Text>
-                      <Text numberOfLines={1}>
-                        <Text style={{ fontWeight: 'bold' }}>address: </Text>{' '}
-                        {e.address}
-                      </Text>
-                      <Text>
-                        <Text style={{ fontWeight: 'bold' }}>Value : </Text>
-                        {e.value}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )
-              )
-            })}
             <View style={{ flex: 1, justifyContent: 'center' }}>
-              <AInput value={toAddress} onChangeText={text => setToAddress(text)} name={I18n.t('to')} />
-              <AInput value={quantity} onChangeText={text => setQuantity(text)} name={I18n.t('quantity')} />
-              {pickedAsset && allAsset[pickedAsset.address] && (
+              <AInput
+                value={toAddress}
+                onChangeText={text => setToAddress(text)}
+                name={I18n.t('to')}
+              />
+              <AInput
+                value={quantity}
+                onChangeText={text => setQuantity(text)}
+                name={I18n.t('quantity')}
+              />
+              {pickedAsset && (
                 <Text numberOfLines={1}>
-                  <Text style={{ fontWeight: 'bold' }}>Name Picked :</Text>{' '}
-                  {allAsset[pickedAsset.address].Name}
+                  <Text style={{ fontWeight: 'bold' }}>Asset Picked :</Text>{' '}
+                  {pickedAsset.Name}
                 </Text>
               )}
-              <AButton positions="right" size="small" title={I18n.t('sendAsset')}
-                       onPress={onSendAsset}
+              <AButton
+                positions="right"
+                size="small"
+                title={I18n.t('sendAsset')}
+                onPress={onSendAsset}
               />
             </View>
+            {allAsset.length > 0 &&
+              allAsset.map((d: Asset, i) => {
+                return (
+                  <AssetItem
+                    key={i.toString()}
+                    element={d}
+                    index={i}
+                    onPress={e => setPickedAsset(e)}
+                  />
+                )
+              })}
           </View>
           <AButton onPress={onLogOut} title={I18n.t('logout')} />
         </ScrollView>
