@@ -6,7 +6,7 @@ import {web3Store} from '@/stores/web3.store'
 export class WalletStore {
   public wallet?: MyEtherWallet
   public account?: Account
-  private PRIVATE_KEY = 'PRIVATE_KEY'
+  private static PRIVATE_KEY = 'PRIVATE_KEY'
   
   async init(privateKey: string) {
     this.wallet = new MyEtherWallet(privateKey)
@@ -16,25 +16,25 @@ export class WalletStore {
   
   async persistPrivateKey(privateKey: string) {
     try {
-      await SecureStore.setItemAsync(this.PRIVATE_KEY, privateKey)
+      await SecureStore.setItemAsync(WalletStore.PRIVATE_KEY, privateKey)
     } catch (e) {
-    
+      return e
     }
   }
   
   async getPrivateKey() {
     try {
-      return await SecureStore.getItemAsync(this.PRIVATE_KEY)
+      return await SecureStore.getItemAsync(WalletStore.PRIVATE_KEY)
     } catch (e) {
-    
+      return e
     }
   }
   
   async deletePrivateKey() {
     try {
-      return await SecureStore.deleteItemAsync(this.PRIVATE_KEY)
+      return await SecureStore.deleteItemAsync(WalletStore.PRIVATE_KEY)
     } catch (e) {
-    
+      return e
     }
   }
 }

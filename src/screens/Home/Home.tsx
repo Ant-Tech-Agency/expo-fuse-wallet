@@ -60,7 +60,10 @@ export const Home: React.FC = () => {
     })
   }, [])
 
-  async function onLogOut() {}
+  async function onLogOut() {
+    await walletStore.deletePrivateKey()
+    navigate('AccessWallet')
+  }
 
   async function onCreateAsset() {
     await walletEffect.createAsset({
