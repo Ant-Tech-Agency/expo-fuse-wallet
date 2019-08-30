@@ -40,7 +40,7 @@ export const Home: React.FC = () => {
   const [pickedAsset, setPickedAsset] = useState<AssetData>(null)
   const [symbol, setSymbol] = useState('')
   const [isFixed, setIsFixed] = useState(false)
-  const [decimals, setDecimals] = useState(0)
+  const [decimals, setDecimals] = useState(18)
 
   useAsyncEffect(async () => {
     await init()
@@ -81,6 +81,11 @@ export const Home: React.FC = () => {
       walletEffect.validateCreateAsset(data)
 
       const txHash = await walletEffect.createAsset(data)
+      
+      setAssetName('')
+      setSupply('')
+      setSymbol('')
+      setDecimals(0)
 
       alert(txHash)
 
@@ -92,6 +97,11 @@ export const Home: React.FC = () => {
 
   async function onSendAsset() {
     try {
+      if (!pickedAsset) {
+        alert('Please select asset that you want to send')
+        return
+      }
+      
       const data = {
         asset: pickedAsset.ID,
         amount: quantity,
@@ -103,7 +113,10 @@ export const Home: React.FC = () => {
       const txHash = await walletEffect.sendAsset(data)
 
       alert(txHash)
-
+  
+      setPickedAsset(null)
+      setQuantity('')
+      
       await init()
     } catch (e) {
       alert(get(e, o => o.message))
@@ -146,15 +159,17 @@ export const Home: React.FC = () => {
                 name={I18n.t('supply')}
               />
               <AInput
-                onChangeText={s => setSymbol(s.toUpperCase())}
+                value={symbol}
+                onChangeText={value => setSymbol(value.toUpperCase())}
                 autoCapitalize={'characters'}
                 maxLength={4}
                 name={I18n.t('assetSymbol')}
               />
               <AInput
+                value={decimals.toString()}
                 maxLength={2}
                 keyboardType={'number-pad'}
-                onChangeText={decimals => setDecimals(parseInt(decimals))}
+                onChangeText={value => setDecimals(value ? parseInt(value) : 0)}
                 name={I18n.t('decimals')}
               />
               <View style={s.switchCover}>

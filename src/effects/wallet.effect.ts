@@ -79,7 +79,7 @@ export class WalletEffect {
     try {
       const publicKey = walletStore.wallet.address
   
-      const total = new BigNumber(supply, decimals)
+      const total = new BigNumber(supply.toString(), decimals)
   
       const tx = await web3Store.fusion.fsntx
         .buildGenAssetTx({
@@ -135,7 +135,7 @@ export class WalletEffect {
       }
       
       const decimals = assetData.Decimals
-      const amountBN = new BigNumber(amount, decimals)
+      const amountBN = new BigNumber(amount.toString(), decimals)
       
       const tx = await web3Store.fusion.fsntx.buildSendAssetTx({
         from: walletStore.wallet.address,
