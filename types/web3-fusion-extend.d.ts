@@ -140,13 +140,17 @@ declare module 'web3-fusion-extend' {
     transaction: Transaction | string
     receipt: Receipt | string
   }
+  
+  export type Balance = {
+    [key: string]: number
+  }
 
   export interface Web3Fusion {
     version: string
     fsn: {
-      getAllBalances(walletAddress: string): Promise<any>
+      getAllBalances(walletAddress: string): Promise<Balance>
       getBalance(type: string, walletAddress: string): Promise<any>
-      signAndTransmit(tx: any, signTx: any): Promise<any>
+      signAndTransmit(tx: any, signTx: any): Promise<string>
       genAsset(data: any, pwd: string): Promise<any>
     }
     fsntx: {

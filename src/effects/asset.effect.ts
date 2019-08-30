@@ -1,6 +1,7 @@
 import { getFsnPrice, getAssets } from '@/services/fusion.service'
 import { AsyncStorage } from 'react-native'
-import { AssetData } from 'web3-fusion-extend'
+import { Asset, AssetData, Balance } from "web3-fusion-extend"
+import { sortBy } from 'lodash/fp'
 
 export type CachedAsset = { [key: string]: AssetData }
 
@@ -106,7 +107,16 @@ export class AssetEffect {
       console.log(e)
     }
   }
-  
+ 
+  getAssetsFromBalances(assets: CachedAsset, balances: Balance) {
+    const data = Object.keys(balances).reduce((acc, key) => {
+      const asset = assets[key]
+      asset.Amount = balances[key]
+      return acc.concat(assets[key])
+    }, [])
+    
+    return sortBy(o => o.Name, data)
+  }
 }
 
 export const assetEffect = new AssetEffect()

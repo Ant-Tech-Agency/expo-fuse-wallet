@@ -1,21 +1,33 @@
 import { walletStore } from '@/stores/wallet.store'
 import { web3Store } from '@/stores/web3.store'
 import { assetEffect } from "@/effects/asset.effect"
+import { BigNumber } from "@/shared/big-number"
+import { WalletConstant } from "@/constants/wallet.constant"
+import { isString, isNumber } from 'lodash/fp'
+
+export type CreateAssetDto = {
+  supply: string
+  name: string
+  decimals: number
+  symbol: string
+  canChange: boolean
+}
+
+export type SendAssetDto = {
+  to: string,
+  asset: string,
+  amount: string
+}
 
 export class WalletEffect {
-  static readonly FSN_TOKEN_ADDRESS =
-    '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-  
-  readonly CHAIN_ID = 46688
-  
   async getBalance() {
     try {
       const rawBalance = await web3Store.fusion.fsn.getBalance(
-        WalletEffect.FSN_TOKEN_ADDRESS,
+        WalletConstant.FsnTokenAddress,
         walletStore.wallet.address
       )
 
-      return rawBalance / WalletEffect.normalizeBalance(18)
+      return rawBalance / BigNumber.generateDecimal(18)
     } catch (e) {
       return e
     }
@@ -30,16 +42,32 @@ export class WalletEffect {
       return e
     }
   }
-
-  static normalizeBalance(decimal: number) {
-    let returnDecimals = '1'
-    for (let i = 0; i < decimal; i++) {
-      returnDecimals += '0'
-    }
-
-    return parseInt(returnDecimals)
-  }
   
+  validateCreateAsset(data: CreateAssetDto) {
+    if (!data.name) {
+      throw new Error('Missing asset name')
+    }
+  
+    if (!data.supply) {
+      throw new Error('Missing supply')
+    }
+  
+    if (isNaN(parseInt(data.supply))) {
+      throw new Error('Supply is not a number')
+    }
+  
+    if (!data.symbol) {
+      throw new Error('Missing symbol')
+    }
+    
+    if (!data.decimals) {
+      throw new Error('Missing decimals')
+    }
+    
+    if (isNaN(data.decimals)) {
+      throw new Error('Decimals is not a number')
+    }
+  }
   
   async createAsset({
     supply,
@@ -47,19 +75,11 @@ export class WalletEffect {
     name,
     symbol,
     canChange = false
-  }: {
-    supply: string
-    name: string
-    decimals: number
-    symbol: string
-    canChange: boolean
-  }) {
+  }: CreateAssetDto) {
     try {
       const publicKey = walletStore.wallet.address
   
-      const totalSupplyBN = web3Store.makeBigNumber(supply, decimals)
-      const totalSupplyBNHex = web3Store.transformToHex(totalSupplyBN)
-      console.log(totalSupplyBNHex)
+      const total = new BigNumber(supply, decimals)
   
       const tx = await web3Store.fusion.fsntx
         .buildGenAssetTx({
@@ -68,22 +88,36 @@ export class WalletEffect {
           symbol,
           decimals,
           canChange,
-          total: totalSupplyBNHex,
+          total: total.toHex(),
           description: '{}',
         })
-  
-      tx.chainId = 46688
+
+      tx.chainId = WalletConstant.ChainID
       tx.from = publicKey
       tx.gasPrice = web3Store.gasPrice
-      
-      console.log(tx.gasPrice)
-  
-      const txHash = await web3Store.fusion.fsn
+
+      return await web3Store.fusion.fsn
         .signAndTransmit(tx, walletStore.account.signTransaction)
-  
-      alert(txHash)
     } catch (e) {
-      alert(e && e.message)
+      return e
+    }
+  }
+  
+  validateSendAsset(data: SendAssetDto) {
+    if (!data.to) {
+      throw new Error('Missing address')
+    }
+    
+    if (!data.asset) {
+      throw new Error('Missing asset')
+    }
+    
+    if (!data.amount) {
+      throw new Error('Missing quality')
+    }
+    
+    if (isNaN(parseInt(data.amount))) {
+      throw new Error('Quality is not a number')
     }
   }
   
@@ -91,22 +125,17 @@ export class WalletEffect {
     to,
     asset,
     amount
-  }: {
-    to: string,
-    asset: string,
-    amount: string
-  }) {
+  }: SendAssetDto) {
     try {
       const publicKey = walletStore.wallet.address
       const assetData = assetEffect.cachedAssets[asset]
       
       if (!assetData) {
-        alert('Asset invalid')
-        return
+        return new Error('Asset was invalid')
       }
       
       const decimals = assetData.Decimals
-      const amountBN = web3Store.makeBigNumber(amount, decimals)
+      const amountBN = new BigNumber(amount, decimals)
       
       const tx = await web3Store.fusion.fsntx.buildSendAssetTx({
         from: walletStore.wallet.address,
@@ -115,15 +144,13 @@ export class WalletEffect {
         asset,
       })
   
-      tx.chainId = 46688
+      tx.chainId = WalletConstant.ChainID
       tx.from = publicKey
       tx.gasPrice = web3Store.gasPrice
-      
-      const txHash = await web3Store.fusion.fsn.signAndTransmit(tx, walletStore.account.signTransaction)
   
-      alert(txHash)
+      return await web3Store.fusion.fsn.signAndTransmit(tx, walletStore.account.signTransaction)
     } catch (e) {
-      alert(e && e.message)
+      return e
     }
   }
 }

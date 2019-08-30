@@ -1,4 +1,6 @@
 import {
+  ActivityIndicator,
+  FlatList,
   Image,
   KeyboardAvoidingView,
   SafeAreaView,
@@ -6,19 +8,23 @@ import {
   StyleSheet,
   Switch,
   Text,
-  View,
-} from 'react-native'
+  View
+} from "react-native"
 import React, { useEffect, useState } from 'react'
-import { WalletEffect, walletEffect } from '@/effects/wallet.effect'
+import { walletEffect } from '@/effects/wallet.effect'
 import { useNavigation } from 'react-navigation-hooks'
 import { walletStore } from '@/stores/wallet.store'
 import { colors, images, metrics } from '@/themes'
-import { AInput } from '@/components'
 import { AButton } from '@/components/AButton/AButton'
 import I18n from '@/i18n'
 import { assetEffect } from '@/effects/asset.effect'
 import { AssetData } from 'web3-fusion-extend'
 import { AssetItem } from '@/screens/Home/components'
+import { AInput } from '@/components/AInput/AInput'
+import { BigNumber } from '@/shared/big-number'
+import { WalletConstant } from '@/constants/wallet.constant'
+import get from 'ts-get'
+import { useAsyncEffect } from 'use-async-effect'
 
 export const Home: React.FC = () => {
   const { navigate } = useNavigation()
@@ -35,25 +41,26 @@ export const Home: React.FC = () => {
   const [symbol, setSymbol] = useState('')
   const [isFixed, setIsFixed] = useState(false)
   const [decimals, setDecimals] = useState(0)
-  
-  useEffect(() => {
-    setLoading(true)
-    init()
-      .then(e => console.log(e))
-      .finally(() => setLoading(false))
+
+  useAsyncEffect(async () => {
+    await init()
   }, [])
 
   async function init() {
-    const balances = await walletEffect.getAllBalances()
-    const assets = await assetEffect.getAssets()
-    const balance = balances[WalletEffect.FSN_TOKEN_ADDRESS] || 0
-    const userAssets = Object.keys(balances).reduce((acc, key) => {
-      const asset = assets[key]
-      asset.Amount = balances[key]
-      return acc.concat(assets[key])
-    }, [])
-    setBalance(balance / WalletEffect.normalizeBalance(18))
-    setAssets(userAssets)
+    try {
+      setLoading(true)
+
+      const balances = await walletEffect.getAllBalances()
+      const assets = await assetEffect.getAssets()
+      const balance = balances[WalletConstant.FsnTokenAddress] || 0
+      const userAssets = assetEffect.getAssetsFromBalances(assets, balances)
+      setBalance(balance / BigNumber.generateDecimal(18))
+      setAssets(userAssets)
+    } catch (e) {
+      return e
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function onLogOut() {
@@ -62,21 +69,45 @@ export const Home: React.FC = () => {
   }
 
   async function onCreateAsset() {
-    await walletEffect.createAsset({
-      supply,
-      decimals,
-      name: assetName,
-      symbol,
-      canChange: isFixed,
-    })
+    try {
+      const data = {
+        supply,
+        decimals,
+        name: assetName,
+        symbol,
+        canChange: isFixed,
+      }
+
+      walletEffect.validateCreateAsset(data)
+
+      const txHash = await walletEffect.createAsset(data)
+
+      alert(txHash)
+
+      await init()
+    } catch (e) {
+      alert(get(e, o => o.message))
+    }
   }
 
   async function onSendAsset() {
-    await walletEffect.sendAsset({
-      asset: pickedAsset.ID,
-      amount: quantity,
-      to: toAddress,
-    })
+    try {
+      const data = {
+        asset: pickedAsset.ID,
+        amount: quantity,
+        to: toAddress,
+      }
+
+      walletEffect.validateSendAsset(data)
+
+      const txHash = await walletEffect.sendAsset(data)
+
+      alert(txHash)
+
+      await init()
+    } catch (e) {
+      alert(get(e, o => o.message))
+    }
   }
 
   return (
@@ -168,17 +199,25 @@ export const Home: React.FC = () => {
                 onPress={onSendAsset}
               />
             </View>
-            {assets.length > 0 &&
-              assets.map((asset: AssetData, i) => {
-                return (
-                  <AssetItem
-                    key={i.toString()}
-                    asset={asset}
-                    index={i}
-                    onPress={e => setPickedAsset(e)}
-                  />
-                )
-              })}
+            <AButton title={'Refresh'} onPress={init} />
+            {
+              assets && !loading ?
+              <FlatList<AssetData>
+                data={assets}
+                keyExtractor={item => item.ID}
+                scrollEnabled={false}
+                renderItem={({item, index}) => {
+                  return (
+                    <AssetItem
+                      asset={item}
+                      index={index}
+                      onPress={e => setPickedAsset(e)}
+                    />
+                  )
+                }}
+              /> :
+                <ActivityIndicator size={'large'} color={'tomato'}/>
+            }
           </View>
           <AButton onPress={onLogOut} title={I18n.t('logout')} />
         </ScrollView>

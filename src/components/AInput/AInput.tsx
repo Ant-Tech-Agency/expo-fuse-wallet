@@ -2,7 +2,7 @@ import React, { useRef } from "react"
 import {StyleSheet, Text, TextInput, TextInputProps, View} from 'react-native'
 import { colors, metrics } from "@/themes"
 
-type AInputProps = {
+export type AInputProps = {
   name: string
 } & TextInputProps
 

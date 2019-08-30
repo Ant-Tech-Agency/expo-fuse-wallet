@@ -8,7 +8,7 @@ export const en = {
   publicAddress : "Public Address",
   assetCreation : "Asset Creation",
   assetName : "Asset Name",
-  supply: "ToTal Supply",
+  supply: "Total Supply",
   createAssets : "Create Asset",
   sendAsset : "Send Asset",
   to: "To",

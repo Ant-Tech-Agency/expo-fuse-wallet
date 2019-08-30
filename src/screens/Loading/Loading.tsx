@@ -23,7 +23,7 @@ export const Loading: React.FC = () => {
   
   useEffect(() => {
     auth().then(() => {
-      console.log('Auth')
+      console.log('Authorized')
     })
   }, [])
   

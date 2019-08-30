@@ -2,15 +2,14 @@ import React from "react"
 import { TouchableOpacity, Text, StyleSheet } from "react-native"
 import { colors, metrics } from "@/themes"
 
-// declare props type
-type Props = {
+export type AButtonProps = {
   onPress?: () => void
   title: String
   size?: String
   positions?: String
 }
-export const AButton: React.FC<Props> = (props: Props) => {
-  // check size
+
+export const AButton: React.FC<AButtonProps> = (props) => {
   function s() {
     switch (props.size) {
       case "small":
