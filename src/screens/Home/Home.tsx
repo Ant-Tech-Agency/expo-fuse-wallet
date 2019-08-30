@@ -8,8 +8,8 @@ import {
   StyleSheet,
   Switch,
   Text,
-  View
-} from "react-native"
+  View,
+} from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { walletEffect } from '@/effects/wallet.effect'
 import { useNavigation } from 'react-navigation-hooks'
@@ -81,7 +81,7 @@ export const Home: React.FC = () => {
       walletEffect.validateCreateAsset(data)
 
       const txHash = await walletEffect.createAsset(data)
-      
+
       setAssetName('')
       setSupply('')
       setSymbol('')
@@ -101,7 +101,7 @@ export const Home: React.FC = () => {
         alert('Please select asset that you want to send')
         return
       }
-      
+
       const data = {
         asset: pickedAsset.ID,
         amount: quantity,
@@ -113,10 +113,10 @@ export const Home: React.FC = () => {
       const txHash = await walletEffect.sendAsset(data)
 
       alert(txHash)
-  
+
       setPickedAsset(null)
       setQuantity('')
-      
+
       await init()
     } catch (e) {
       alert(get(e, o => o.message))
@@ -149,16 +149,19 @@ export const Home: React.FC = () => {
             <Text style={s.titleFeature}>{I18n.t('assetCreation')}</Text>
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <AInput
+                autoCorrect={false}
                 value={assetName}
                 onChangeText={asset => setAssetName(asset)}
                 name={I18n.t('assetName')}
               />
               <AInput
                 value={supply}
+                keyboardType={'number-pad'}
                 onChangeText={value => setSupply(value)}
                 name={I18n.t('supply')}
               />
               <AInput
+                autoCorrect={false}
                 value={symbol}
                 onChangeText={value => setSymbol(value.toUpperCase())}
                 autoCapitalize={'characters'}
@@ -215,13 +218,12 @@ export const Home: React.FC = () => {
               />
             </View>
             <AButton title={'Refresh'} onPress={init} />
-            {
-              assets && !loading ?
+            {assets && !loading ? (
               <FlatList<AssetData>
                 data={assets}
                 keyExtractor={item => item.ID}
                 scrollEnabled={false}
-                renderItem={({item, index}) => {
+                renderItem={({ item, index }) => {
                   return (
                     <AssetItem
                       asset={item}
@@ -230,9 +232,10 @@ export const Home: React.FC = () => {
                     />
                   )
                 }}
-              /> :
-                <ActivityIndicator size={'large'} color={'tomato'}/>
-            }
+              />
+            ) : (
+              <ActivityIndicator size={'large'} color={'tomato'} />
+            )}
           </View>
           <AButton onPress={onLogOut} title={I18n.t('logout')} />
         </ScrollView>

@@ -1,6 +1,6 @@
 import { getFsnPrice, getAssets } from '@/services/fusion.service'
 import { AsyncStorage } from 'react-native'
-import { Asset, AssetData, Balance } from "web3-fusion-extend"
+import { Asset, AssetData, Balance } from 'web3-fusion-extend'
 import { sortBy } from 'lodash/fp'
 
 export type CachedAsset = { [key: string]: AssetData }
@@ -33,7 +33,7 @@ const defaultCachedAssets: CachedAsset = {
 export class AssetEffect {
   private _cachedAssets: CachedAsset = {}
   public static CACHED_ASSETS = 'CACHED_ASSETS'
-  
+
   constructor() {
     this.getCachedAssets()
       .then(data => {
@@ -51,7 +51,7 @@ export class AssetEffect {
   set cachedAssets(value: CachedAsset) {
     AsyncStorage.setItem(AssetEffect.CACHED_ASSETS, JSON.stringify(value))
       .then(data => {
-        console.log(data)
+        // console.log(data)
       })
       .catch(err => {
         console.log(err)
@@ -59,17 +59,17 @@ export class AssetEffect {
 
     this._cachedAssets = Object.assign({}, defaultCachedAssets, value)
   }
-  
+
   async getCachedAssets() {
     try {
       const data = await AsyncStorage.getItem(AssetEffect.CACHED_ASSETS)
-  
+
       if (data) {
         this.cachedAssets = JSON.parse(data)
       } else {
         this.cachedAssets = {}
       }
-  
+
       return this.cachedAssets
     } catch (e) {
       return e
@@ -99,7 +99,7 @@ export class AssetEffect {
           cachedAssets[data.AssetID] = data
         })
       }
-      
+
       this.cachedAssets = cachedAssets
 
       return this.cachedAssets
@@ -107,14 +107,14 @@ export class AssetEffect {
       console.log(e)
     }
   }
- 
+
   getAssetsFromBalances(assets: CachedAsset, balances: Balance) {
     const data = Object.keys(balances).reduce((acc, key) => {
       const asset = assets[key]
       asset.Amount = balances[key]
       return acc.concat(assets[key])
     }, [])
-    
+
     return sortBy(o => o.Name, data)
   }
 }
