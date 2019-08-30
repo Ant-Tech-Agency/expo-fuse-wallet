@@ -35,6 +35,7 @@ export const Home: React.FC = () => {
   const [symbol, setSymbol] = useState('')
   const [isFixed, setIsFixed] = useState(false)
   const [decimals, setDecimals] = useState(0)
+  
   useEffect(() => {
     setLoading(true)
     init()
